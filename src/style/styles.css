@@ -1,0 +1,27 @@
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+}
+button {
+  padding: 6px 10px;
+  border: 1px solid #ddd;
+  background: #fff;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+/* map marker */
+.jr-marker {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #2b7;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 2px #2b7;
+}
+.jr-marker.picked {
+  background: #f60;
+  box-shadow: 0 0 0 2px #f60;
+}

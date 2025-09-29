@@ -1,0 +1,110 @@
+{
+  "CAM_TOKYO": {
+    "title": "東京",
+    "hls": {
+      "url480": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
+      "url720": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
+      "url1080": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"
+    },
+    "webrtc": null
+  },
+  "CAM_UENO": {
+    "title": "上野",
+    "hls": {
+      "url480": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
+      "url720": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
+      "url1080": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"
+    },
+    "webrtc": null
+  },
+  "CAM_SHINAGAWA": {
+    "title": "品川",
+    "hls": {
+      "url480": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
+      "url720": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
+      "url1080": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"
+    },
+    "webrtc": null
+  },
+  "CAM_SHIBUYA": {
+    "title": "渋谷",
+    "hls": {
+      "url480": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
+      "url720": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
+      "url1080": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"
+    },
+    "webrtc": null
+  },
+  "CAM_SHINJUKU": {
+    "title": "新宿",
+    "hls": {
+      "url480": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
+      "url720": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
+      "url1080": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"
+    },
+    "webrtc": null
+  },
+  "CAM_AKIHABARA": {
+    "title": "秋葉原",
+    "hls": {
+      "url480": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
+      "url720": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
+      "url1080": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"
+    },
+    "webrtc": null
+  },
+  "CAM_IKEBUKURO": {
+    "title": "池袋",
+    "hls": {
+      "url480": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
+      "url720": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
+      "url1080": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"
+    },
+    "webrtc": null
+  },
+  "CAM_KANDA": {
+    "title": "神田",
+    "hls": {
+      "url480": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
+      "url720": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
+      "url1080": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"
+    },
+    "webrtc": null
+  },
+  "CAM_OCHANOMIZU": {
+    "title": "御茶ノ水",
+    "hls": {
+      "url480": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
+      "url720": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
+      "url1080": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"
+    },
+    "webrtc": null
+  },
+  "CAM_YURAKUCHO": {
+    "title": "有楽町",
+    "hls": {
+      "url480": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
+      "url720": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
+      "url1080": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"
+    },
+    "webrtc": null
+  },
+  "CAM_HAMAMATSU": {
+    "title": "浜松町",
+    "hls": {
+      "url480": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
+      "url720": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
+      "url1080": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"
+    },
+    "webrtc": null
+  },
+  "CAM_KINSHICHO": {
+    "title": "錦糸町",
+    "hls": {
+      "url480": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
+      "url720": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
+      "url1080": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"
+    },
+    "webrtc": null
+  }
+}
