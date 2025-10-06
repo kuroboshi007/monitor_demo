@@ -12,6 +12,41 @@ button {
   cursor: pointer;
 }
 
+.dashboard_main {
+  height: 100vh;
+}
+
+.page_container {
+  padding: 24px;
+}
+
+/* data bar */
+.data_bar {
+  margin: 12px 0;
+  display: flex;
+  justify-content: space-between;
+}
+.data_bar_right {
+  flex: 1;
+  display: flex;
+  justify-content: end;
+  margin-left: 30px;
+}
+
+.data_bar_right .n-input {
+  min-width: 300px;
+  max-width: 600px;
+  margin-right: 10px;
+}
+
+.data_bar_left {
+  display: flex;
+  align-items: center;
+}
+.data_bar_left .n-button {
+  margin-right: 10px;
+}
+
 /* map marker */
 .jr-marker {
   width: 20px;

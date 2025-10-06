@@ -5,10 +5,7 @@
     <button @click="wall.setMode(9)">9</button>
     <span class="hint">Selected：{{ wall.selectedCount }}</span>
   </div>
-
-  <div
-    class="grid"
-    :style="{ gridTemplateColumns: `repeat(${wall.gridCols}, 1fr)` }">
+  <div class="grid" :style="{ gridTemplateColumns: `repeat(${wall.gridCols}, 1fr)` }">
     <!-- 已有的可见 Tile -->
     <div
       v-for="t in wall.visibleTiles"
@@ -18,7 +15,6 @@
       <div class="title">{{ t.title }}</div>
       <VideoTile :source="t" />
     </div>
-
     <!-- 占位补齐（让 4→9 后也有满 9 格的感觉） -->
     <div
       v-for="i in wall.placeholdersCount"
@@ -30,8 +26,8 @@
 </template>
 
 <script setup lang="ts">
-import { useWallStore } from "../stores/wall";
-import VideoTile from "../components/VideoTile.vue";
+import { useWallStore } from '../stores/wall';
+import VideoTile from '../components/VideoTile.vue';
 const wall = useWallStore();
 </script>
 
@@ -74,7 +70,6 @@ const wall = useWallStore();
   align-items: center;
   justify-content: center;
   border: 1px dashed #bbb;
-  /* border-radius: 12px; */
   color: #777;
   background: repeating-linear-gradient(
     45deg,

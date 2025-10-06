@@ -7,9 +7,8 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount, ref } from "vue";
-import Hls from "hls.js";
-// import { playWebRTC } from '../services/rtc' // 未来接入
+import { onMounted, onBeforeUnmount, ref } from 'vue';
+import Hls from 'hls.js';
 
 const props = defineProps<{
   source: {
@@ -19,15 +18,14 @@ const props = defineProps<{
     webrtc?: { room: string; token: string };
   };
 }>();
+
 const vid = ref<HTMLVideoElement>();
 let hls: Hls | null = null;
-const mode = ref<"webrtc" | "hls">(props.source.webrtc ? "webrtc" : "hls");
+const mode = ref<'webrtc' | 'hls'>(props.source.webrtc ? 'webrtc' : 'hls');
 
 onMounted(async () => {
-  if (mode.value === "webrtc") {
-    // const ok = await playWebRTC(props.source.webrtc!, vid.value!)
-    // if (!ok) return playHls()
-    // 先不启用 WebRTC，直接回退看效果：
+  if (mode.value === 'webrtc') {
+    // 可在未来接入 WebRTC
     playHls();
   } else {
     playHls();
@@ -36,27 +34,23 @@ onMounted(async () => {
 
 function playHls() {
   if (!props.source.hls) {
-    console.warn("No HLS URL for", props.source.id);
+    console.warn('No HLS URL for', props.source.id);
     return;
   }
   if (Hls.isSupported()) {
     hls?.destroy();
     hls = new Hls({ lowLatencyMode: true });
     hls.on(Hls.Events.MEDIA_ATTACHED, () =>
-      console.log("HLS media attached", props.source.id)
+      console.log('HLS media attached', props.source.id)
     );
     hls.on(Hls.Events.MANIFEST_PARSED, () =>
-      console.log("HLS manifest parsed", props.source.id)
+      console.log('HLS manifest parsed', props.source.id)
     );
-    hls.on(Hls.Events.ERROR, (e, data) => console.error("HLS error", data));
+    hls.on(Hls.Events.ERROR, (e, data) => console.error('HLS error', data));
     hls.loadSource(props.source.hls);
     hls.attachMedia(vid.value!);
-    // 某些环境下额外触发一次 play() 可避免卡住
-    setTimeout(
-      () =>
-        vid.value?.play().catch((err) => console.warn("play() blocked", err)),
-      0
-    );
+    // 避免某些环境下视频播放不自动开始
+    setTimeout(() => vid.value?.play().catch((err) => console.warn('play() blocked', err)), 0);
   } else {
     vid.value!.src = props.source.hls;
   }
