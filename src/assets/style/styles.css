@@ -16,6 +16,22 @@ button {
   height: 100vh;
 }
 
+.title_box {
+  padding: 0 8px;
+  margin: 0;
+  display: flex;
+  /* border-bottom: 1px solid #eeeeee; */
+  box-sizing: border-box;
+}
+.title_box .logo {
+  display: flex;
+  align-items: center;
+  margin: 0 8px;
+}
+.logo .n-avatar {
+  background: none;
+}
+
 .page_container {
   padding: 24px;
 }

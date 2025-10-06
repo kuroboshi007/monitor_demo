@@ -29,10 +29,18 @@
 </template>
 
 <script setup lang="ts">
-import { h, reactive, ref } from "vue";
+import { h, reactive, ref, Transition } from "vue";
 import type { DataTableColumns } from "naive-ui";
-import { NDataTable, NButton, NTag, NInput, NIcon, useMessage } from "naive-ui";
-import { Search } from "@vicons/ionicons5";
+import {
+  NDataTable,
+  NButton,
+  NTag,
+  NInput,
+  NIcon,
+  useMessage,
+  NPopconfirm,
+} from "naive-ui";
+import { Search, Create, TrashBin } from "@vicons/ionicons5";
 
 type RowData = {
   key: number;
@@ -183,36 +191,67 @@ function createColumns(): DataTableColumns<RowData> {
       fixed: "right",
       render(row) {
         const isEditing = editingRowKey.value === row.key;
-        if (!isEditing) {
-          return h("div", { style: "display: flex; gap: 8px;" }, [
+        const viewActions = h(
+          "div",
+          {
+            key: "view",
+            style: "display: flex; gap: 8px; align-items: center;",
+          },
+          [
+            // Edit
             h(
               NButton,
               {
-                size: "small",
+                strong: true,
+                secondary: true,
+                circle: true,
+                type: "info",
                 onClick: () => startEdit(row),
               },
-              { default: () => "Edit" }
+              { icon: () => h(NIcon, null, { default: () => h(Create) }) }
             ),
+            // Delete
             h(
-              NButton,
+              NPopconfirm,
               {
-                size: "small",
-                type: "error",
+                positiveButtonProps: { type: "error" },
+                negativeText: "Cancel",
+                positiveText: "Delete",
+                onPositiveClick: () => handleConfirmDelete(row),
               },
-              { default: () => "Delete" }
+              {
+                trigger: () =>
+                  h(
+                    NButton,
+                    {
+                      strong: true,
+                      secondary: true,
+                      circle: true,
+                      type: "error",
+                    },
+                    {
+                      icon: () =>
+                        h(NIcon, null, { default: () => h(TrashBin) }),
+                    }
+                  ),
+                default: () => `Confirm delete ${row.companyName}?`,
+              }
             ),
-          ]);
-        } else {
-          return h("div", { style: "display: flex; gap: 8px;" }, [
+          ]
+        );
+        const editActions = h(
+          "div",
+          {
+            key: "edit",
+            style: "display: flex; gap: 8px; align-items: center;",
+          },
+          [
             h(
               NButton,
               {
                 size: "small",
                 onClick: () => {
                   editingRowKey.value = null;
-                  Object.keys(isEditing).forEach(
-                    (k) => delete (isEditing as any)[k]
-                  );
                 },
               },
               { default: () => "Cancel" }
@@ -226,8 +265,15 @@ function createColumns(): DataTableColumns<RowData> {
               },
               { default: () => "Submit" }
             ),
-          ]);
-        }
+          ]
+        );
+        return h(
+          Transition,
+          { mode: "out-in" },
+          {
+            default: () => (isEditing ? editActions : viewActions),
+          }
+        );
       },
     },
   ];
@@ -263,6 +309,14 @@ function createData(): RowData[] {
       tags: ["civil", "bridge"],
     },
   ];
+}
+
+function handleConfirmDelete(row: RowData) {
+  const idx = data.value.findIndex((r) => r.key === row.key);
+  if (idx >= 0) {
+    data.value.splice(idx, 1);
+    message.success(`Deleted: ${row.companyName}`);
+  }
 }
 
 const data = ref<RowData[]>(createData());

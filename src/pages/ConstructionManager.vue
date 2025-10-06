@@ -89,8 +89,10 @@ import {
   NInput,
   NIcon,
   useMessage,
+  NPopconfirm,
+  NTooltip,
 } from "naive-ui";
-import { Search } from "@vicons/ionicons5";
+import { Search, Create, TrashBin } from "@vicons/ionicons5";
 
 type RowData = {
   key: number;
@@ -205,15 +207,61 @@ function createColumns(): DataTableColumns<RowData> {
       width: 120,
       fixed: "right",
       render(row) {
-        return h(
-          NButton,
-          { size: "small", onClick: () => startEdit(row) },
-          { default: () => "Edit" }
-        );
+        return h("div", { style: "display: flex; gap: 8px;" }, [
+          // Edit
+          h(
+            NButton,
+            {
+              strong: true,
+              secondary: true,
+              circle: true,
+              type: "info",
+              onClick: () => startEdit(row),
+            },
+            {
+              icon: () => h(NIcon, null, { default: () => h(Create) }),
+            }
+          ),
+          // Delete
+          h(
+            NPopconfirm,
+            {
+              positiveButtonProps: { type: "error" },
+              negativeText: "Cancel",
+              positiveText: "Delete",
+              onPositiveClick: () => {
+                handleConfirmDelete(row);
+              },
+            },
+            {
+              trigger: () =>
+                h(
+                  NButton,
+                  {
+                    strong: true,
+                    secondary: true,
+                    circle: true,
+                    type: "error",
+                  },
+                  { icon: () => h(NIcon, null, { default: () => h(TrashBin) }) }
+                ),
+              default: () => `Confirm delete ${row.projectName}?`,
+            }
+          ),
+        ]);
       },
     },
   ];
 }
+
+function handleConfirmDelete(row: RowData) {
+  const idx = data.value.findIndex((r) => r.key === row.key);
+  if (idx >= 0) {
+    data.value.splice(idx, 1);
+    message.success(`Deleted: ${row.projectName}`);
+  }
+}
+
 const columns = createColumns();
 const pagination = { pageSize: 10 };
 </script>

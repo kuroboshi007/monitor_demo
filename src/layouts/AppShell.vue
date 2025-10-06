@@ -1,13 +1,23 @@
 <template>
   <n-layout has-sider class="dashboard_main">
     <!-- 侧边栏菜单 -->
-    <n-layout-sider width="250">
+    <n-layout-sider
+      width="300"
+      :style="{
+        backgroundColor: isDark ? '#22272e' : 'var(--n-color)',
+      }">
+      <div class="title_box">
+        <div class="logo">
+          <n-avatar size="medium" :src="isDark ? logoDark : logoLight" />
+        </div>
+        <h2>Monitoring System</h2>
+      </div>
       <n-menu
         :value="activeKey"
         :options="menuOptions"
         @update:value="handleMenuSelect" />
     </n-layout-sider>
-    <!-- 主内容区域，包含顶栏 -->
+    <!-- Main -->
     <n-layout>
       <n-layout-header
         style="
@@ -16,11 +26,14 @@
           align-items: center;
           padding: 0 16px;
         ">
-        <div style="font-size: 1.25rem; font-weight: 600">
+        <!-- <div style="font-size: 1.25rem; font-weight: 600">
           {{ currentLabel }}
-        </div>
+        </div> -->
+        <n-breadcrumb>
+          <n-breadcrumb-item href="/"> Home</n-breadcrumb-item>
+          <n-breadcrumb-item> {{ currentLabel }} </n-breadcrumb-item>
+        </n-breadcrumb>
         <div style="margin-left: auto">
-          <!-- 暗色模式开关 -->
           <!-- <n-switch v-model:value="isDark" /> -->
           <n-button v-show="isDark" @click="isDark = false"> Dark </n-button>
           <n-button v-show="!isDark" @click="isDark = true"> Light </n-button>
@@ -44,8 +57,13 @@ import {
   NMenu,
   NSwitch,
   NButton,
+  NAvatar,
+  NBreadcrumb,
+  NBreadcrumbItem,
 } from "naive-ui";
 import { useUIStore } from "../stores/ui";
+import logoDark from "@/assets/img/cat_d.png";
+import logoLight from "@/assets/img/cat_l.png";
 
 const router = useRouter();
 const route = useRoute();
