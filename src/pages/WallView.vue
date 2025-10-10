@@ -5,7 +5,9 @@
     <button @click="wall.setMode(9)">9</button>
     <span class="hint">Selected：{{ wall.selectedCount }}</span>
   </div>
-  <div class="grid" :style="{ gridTemplateColumns: `repeat(${wall.gridCols}, 1fr)` }">
+  <div
+    class="grid"
+    :style="{ gridTemplateColumns: `repeat(${wall.gridCols}, 1fr)` }">
     <!-- 已有的可见 Tile -->
     <div
       v-for="t in wall.visibleTiles"
@@ -26,9 +28,31 @@
 </template>
 
 <script setup lang="ts">
-import { useWallStore } from '../stores/wall';
-import VideoTile from '../components/VideoTile.vue';
-const wall = useWallStore();
+import { reactive, onMounted, onBeforeUnmount } from "vue";
+import { listenMonitorUpdates } from "@/utils/monitorBridge";
+
+const state = reactive({
+  items: [] as Array<any>,
+  count: 0,
+  lastTs: 0,
+});
+
+function handleUpdate(data: any) {
+  if (!data) return;
+  state.items = Array.isArray(data.items) ? data.items : [];
+  state.count = data.count ?? state.items.length;
+  state.lastTs = data.timestamp ?? Date.now();
+}
+
+let stop: null | (() => void) = null;
+
+onMounted(() => {
+  stop = listenMonitorUpdates(handleUpdate);
+});
+
+onBeforeUnmount(() => {
+  stop?.();
+});
 </script>
 
 <style scoped>

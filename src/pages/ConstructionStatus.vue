@@ -16,47 +16,79 @@
 </template>
 
 <script setup lang="ts">
-import maplibregl from 'maplibre-gl';
-import 'maplibre-gl/dist/maplibre-gl.css';
-import { onMounted } from 'vue';
-import { useRouter } from 'vue-router';
-import { useWallStore } from '../stores/wall';
-import { listAssets, getStreamsByAssetId } from '../services/api';
+import maplibregl from "maplibre-gl";
+import "maplibre-gl/dist/maplibre-gl.css";
+import { computed, onMounted } from "vue";
+import { useRouter } from "vue-router";
+import { useWallStore } from "../stores/wall";
+import { listAssets, getStreamsByAssetId } from "../services/api";
+import {
+  openOrReuseMonitor,
+  postUpdateToMonitor,
+  attachCloseChildOnUnload,
+} from "../utils/monitorBridge";
 
 const router = useRouter();
 const wall = useWallStore();
 
+// 要发给监控墙的数据（按你的实际字段调整）
+const selectedPayload = computed(() => ({
+  items: wall.selected, // e.g. [{ id, name, streamUrl, ... }]
+  count: wall.selectedCount,
+  timestamp: Date.now(),
+}));
+
+function goMonitor() {
+  // 用绝对 URL，确保同源
+  const url = new URL("/wall", location.origin).toString();
+
+  const child = openOrReuseMonitor(url);
+  if (!child) {
+    // 被拦截就提示允许弹窗
+    window.alert("浏览器拦截了弹窗，请允许本站弹出窗口后再试一次。");
+    return;
+  }
+  // 无论首次还是再次，都推送最新数据
+  postUpdateToMonitor(selectedPayload.value);
+}
+
+onMounted(() => {
+  // 主窗关闭则关掉监控窗
+  attachCloseChildOnUnload();
+});
 onMounted(async () => {
   const map = new maplibregl.Map({
-    container: 'map',
+    container: "map",
     style: import.meta.env.VITE_MAP_STYLE,
     center: [139.7671, 35.6812],
-    zoom: 11
+    zoom: 11,
   });
   const assets = await listAssets();
   for (const a of assets) {
-    const el = document.createElement('div');
-    el.className = 'jr-marker';
-    if (wall.isSelected(a.id)) el.classList.add('picked');
+    const el = document.createElement("div");
+    el.className = "jr-marker";
+    if (wall.isSelected(a.id)) el.classList.add("picked");
     new maplibregl.Marker({ element: el })
       .setLngLat([a.lng, a.lat])
       .setPopup(new maplibregl.Popup().setText(a.name))
       .addTo(map);
-    el.addEventListener('click', () => {
+    el.addEventListener("click", () => {
       const already = wall.isSelected(a.id);
       if (!already && wall.selectedCount >= 9) {
-        console.warn('The upper limit has been reached: up to 9 options can be selected');
+        console.warn(
+          "The upper limit has been reached: up to 9 options can be selected"
+        );
         return;
       }
       wall.toggleAsset({ id: a.id, name: a.name });
-      el.classList.toggle('picked', wall.isSelected(a.id));
+      el.classList.toggle("picked", wall.isSelected(a.id));
     });
   }
 });
 
 async function goWall() {
   await wall.ensureStreams(getStreamsByAssetId);
-  router.push('/wall');
+  router.push("/wall");
 }
 </script>
 
