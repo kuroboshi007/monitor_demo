@@ -1,47 +1,54 @@
 <template>
   <div class="topbar">
+    <!-- 切换布局按钮：1、4、9 宫格 -->
     <button @click="wall.setMode(1)">1</button>
     <button @click="wall.setMode(4)">4</button>
     <button @click="wall.setMode(9)">9</button>
     <span class="hint">Selected：{{ wall.selectedCount }}</span>
   </div>
-  <div
-    class="grid"
-    :style="{ gridTemplateColumns: `repeat(${wall.gridCols}, 1fr)` }">
-    <!-- 已有的可见 Tile -->
+  <div class="grid" :style="{ gridTemplateColumns: `repeat(${wall.gridCols}, 1fr)` }">
+    <!-- 渲染选中的视频格子 -->
     <div
       v-for="t in wall.visibleTiles"
       :key="t.id"
       class="tile-wrap"
-      @dblclick="wall.focus(t.id)">
+      @dblclick="wall.focus(t.id)"
+    >
       <div class="title">{{ t.title }}</div>
       <VideoTile :source="t" />
     </div>
-    <!-- 占位补齐（让 4→9 后也有满 9 格的感觉） -->
+    <!-- 用占位块填满布局 -->
     <div
       v-for="i in wall.placeholdersCount"
       :key="'ph' + i"
-      class="placeholder">
+      class="placeholder"
+    >
       (Empty) Add back to the map
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { reactive, onMounted, onBeforeUnmount } from "vue";
-import { listenMonitorUpdates } from "@/utils/monitorBridge";
+import { onMounted, onBeforeUnmount } from "vue";
+import { listenMonitorUpdates } from "../utils/monitorBridge";
+import { useWallStore } from "../stores/wall";
+import { getStreamsByAssetId } from "../services/api";
+import VideoTile from "../components/VideoTile.vue";
 
-const state = reactive({
-  items: [] as Array<any>,
-  count: 0,
-  lastTs: 0,
-});
+// 使用 Pinia 存储管理选中项和视频流
+const wall = useWallStore();
 
+// 处理来自主控窗口的更新消息：根据传入的数据更新已选资产并加载流信息
 function handleUpdate(data: any) {
   if (!data) return;
-  state.items = Array.isArray(data.items) ? data.items : [];
-  state.count = data.count ?? state.items.length;
-  state.lastTs = data.timestamp ?? Date.now();
+  const items = Array.isArray(data.items) ? data.items : [];
+  // 清空当前选项并根据接收到的列表重新选择
+  wall.clearSelected();
+  for (const it of items) {
+    wall.toggleAsset({ id: it.id, name: it.name });
+  }
+  // 拉取流信息以填充视频格子
+  wall.ensureStreams(getStreamsByAssetId);
 }
 
 let stop: null | (() => void) = null;

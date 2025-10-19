@@ -1,27 +1,38 @@
 <template>
   <div class="page">
     <div class="map_box">
+      <!-- Main map area -->
       <div class="_map_main">
-        <!-- 2D地図表示 -->
+        <!-- 2D map container -->
         <div id="map" class="map"></div>
       </div>
+
+      <!-- Sidebar: selectable construction sites -->
       <div class="_map_sidebar" :width="400">
-        <h3>Select up to 9 assets to monitor</h3>
-        /
-        <p>Click markers on the map to select/deselect assets.</p>
-        <p>Then click the button below to open the monitoring wall.</p>
-      </div>
-    </div>
-    <div class="toolbar">
-      <div class="picked">
-        Selected {{ wall.selectedCount }}
-        <ul>
-          <li v-for="p in wall.selected" :key="p.id">{{ p.name }}</li>
+        <h3>Selected {{ selectedCount }}</h3>
+        <p>Select up to 9 assets to monitor</p>
+        <p>
+          Click a name below or a marker on the map to select/deselect assets.
+        </p>
+        <p>
+          When finished, click the button below to open the monitoring wall.
+        </p>
+
+        <ul class="asset-list">
+          <li
+            v-for="a in assets"
+            :key="a.id"
+            :class="{ selected: wall.isSelected(a.id) }"
+            @click="selectAsset(a)">
+            {{ a.name }}
+          </li>
         </ul>
+
+        <!-- Open the monitor wall in a new window -->
+        <button :disabled="selectedCount === 0" @click="goMonitor">
+          Go to the Monitor
+        </button>
       </div>
-      <button :disabled="wall.selectedCount === 0" @click="goWall">
-        Go to the Monitor
-      </button>
     </div>
   </div>
 </template>
@@ -29,85 +40,129 @@
 <script setup lang="ts">
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { computed, onMounted } from "vue";
-import { useRouter } from "vue-router";
+import { computed, onMounted, ref, watch } from "vue";
 import { useWallStore } from "../stores/wall";
-import { listAssets, getStreamsByAssetId } from "../services/api";
+import { listAssets, type AssetInfo } from "../services/api";
 import {
   openOrReuseMonitor,
   postUpdateToMonitor,
   attachCloseChildOnUnload,
 } from "../utils/monitorBridge";
-import {
-  NLayout,
-  NLayoutSider,
-  NLayoutHeader,
-  NLayoutContent,
-  NSpace,
-} from "naive-ui";
 
-const router = useRouter();
+// Store for wall layout and selection
 const wall = useWallStore();
 
-// 要发给监控墙的数据（按你的实际字段调整）
+// Sidebar list data
+const assets = ref<AssetInfo[]>([]);
+
+// MapLibre style: GSI Pale (淡色地図)
+const gsiPaleStyle = {
+  version: 8,
+  sources: {
+    pale: {
+      type: "raster",
+      tiles: ["https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png"],
+      tileSize: 256,
+      attribution: "GSI Japan",
+    },
+  },
+  layers: [
+    { id: "pale", type: "raster", source: "pale", minzoom: 0, maxzoom: 20 },
+  ],
+};
+
+// Keep DOM refs of markers for quick style sync
+const markerEls: Record<string, HTMLElement> = {};
+
+// Use wall.selected directly to ensure reactivity is correct and instant
+const selectedCount = computed(() => wall.selected.length);
+
+// Build a plain (cloneable) payload for the monitor wall
+const selectedPlain = computed(() =>
+  wall.selected.map((a) => ({ id: a.id, name: a.name }))
+);
+
 const selectedPayload = computed(() => ({
-  items: wall.selected, // e.g. [{ id, name, streamUrl, ... }]
-  count: wall.selectedCount,
+  items: selectedPlain.value, // plain JSON array
+  count: selectedPlain.value.length, // avoid reading reactive getters
   timestamp: Date.now(),
 }));
 
-function goMonitor() {
-  // 用绝对 URL，确保同源
-  const url = new URL("/wall", location.origin).toString();
-
-  const child = openOrReuseMonitor(url);
-  if (!child) {
-    // 被拦截就提示允许弹窗
-    window.alert("浏览器拦截了弹窗，请允许本站弹出窗口后再试一次。");
+/**
+ * Toggle selection for an asset.
+ * Works for both sidebar clicks and map marker clicks.
+ */
+function selectAsset(a: AssetInfo) {
+  const already = wall.isSelected(a.id);
+  if (!already && selectedCount.value >= 9) {
+    console.warn("Upper limit reached: you can select up to 9 items.");
     return;
   }
-  // 无论首次还是再次，都推送最新数据
-  postUpdateToMonitor(selectedPayload.value);
+  wall.toggleAsset({ id: a.id, name: a.name });
+
+  // Sync marker style if exists
+  const el = markerEls[a.id];
+  if (el) el.classList.toggle("picked", wall.isSelected(a.id));
 }
 
-onMounted(() => {
-  // 主窗关闭则关掉监控窗
-  attachCloseChildOnUnload();
-});
+/**
+ * Open (or reuse) the monitor window and push the latest selection immediately.
+ */
+function goMonitor() {
+  const url = new URL("/wall", location.origin).toString();
+  const child = openOrReuseMonitor(url);
+  if (!child) {
+    window.alert("Popup blocked. Please allow popups for this site and retry.");
+    return;
+  }
+  try {
+    postUpdateToMonitor(selectedPayload.value);
+  } catch (e) {
+    console.error("Failed to post initial payload:", e);
+  }
+}
+
+// Init map & markers
 onMounted(async () => {
+  attachCloseChildOnUnload();
+
   const map = new maplibregl.Map({
     container: "map",
-    style: import.meta.env.VITE_MAP_STYLE,
+    style: gsiPaleStyle,
     center: [139.7671, 35.6812],
     zoom: 11,
   });
-  const assets = await listAssets();
-  for (const a of assets) {
+
+  assets.value = await listAssets();
+
+  for (const a of assets.value) {
     const el = document.createElement("div");
     el.className = "jr-marker";
     if (wall.isSelected(a.id)) el.classList.add("picked");
+    markerEls[a.id] = el;
+
     new maplibregl.Marker({ element: el })
       .setLngLat([a.lng, a.lat])
       .setPopup(new maplibregl.Popup().setText(a.name))
       .addTo(map);
-    el.addEventListener("click", () => {
-      const already = wall.isSelected(a.id);
-      if (!already && wall.selectedCount >= 9) {
-        console.warn(
-          "The upper limit has been reached: up to 9 options can be selected"
-        );
-        return;
-      }
-      wall.toggleAsset({ id: a.id, name: a.name });
-      el.classList.toggle("picked", wall.isSelected(a.id));
-    });
+
+    el.addEventListener("click", () => selectAsset(a));
   }
 });
 
-async function goWall() {
-  await wall.ensureStreams(getStreamsByAssetId);
-  router.push("/wall");
-}
+// Broadcast updates to the monitor whenever selection payload changes
+watch(
+  selectedPayload,
+  (payload) => {
+    try {
+      // Payload is plain JSON now, BroadcastChannel can clone it
+      postUpdateToMonitor(payload);
+    } catch (e) {
+      console.error("Failed to post update payload:", e);
+    }
+  }
+  // No { deep: true } needed since selectedPayload is a computed snapshot
+);
 </script>
 
 <style>
@@ -118,15 +173,14 @@ async function goWall() {
   display: flex;
   flex-direction: column;
 }
-.page_container {
-  padding: 24px;
-}
+
 .map_box {
   flex: 1;
   display: flex;
   height: 100%;
   overflow: hidden;
 }
+
 ._map_main {
   flex: 1;
   position: relative;
@@ -138,12 +192,14 @@ async function goWall() {
   box-sizing: border-box;
   background: #fff;
   border-left: 1px solid #ddd;
+  overflow-y: auto;
 }
 
 .map {
   position: absolute;
   inset: 0;
 }
+
 .toolbar {
   position: absolute;
   top: 12px;
@@ -153,7 +209,9 @@ async function goWall() {
   border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   max-width: 280px;
+  z-index: 10;
 }
+
 .picked {
   font-size: 12px;
   color: #333;
@@ -161,12 +219,39 @@ async function goWall() {
   max-height: 180px;
   overflow: auto;
 }
+
 .picked ul {
   margin: 6px 0 0 18px;
   padding: 0;
 }
+
 button[disabled] {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* 资产列表样式 */
+.asset-list {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 0;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.asset-list li {
+  padding: 6px 8px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+  user-select: none;
+}
+
+.asset-list li:hover {
+  background: #f9f9f9;
+}
+
+.asset-list li.selected {
+  background: #e6f7ff;
+  font-weight: bold;
 }
 </style>
