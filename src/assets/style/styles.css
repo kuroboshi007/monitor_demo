@@ -36,6 +36,11 @@ button {
   padding: 24px;
 }
 
+.n-layout-scroll-container.main_content {
+  height: calc(100vh - 64px);
+  box-sizing: border-box;
+}
+
 /* data bar */
 .data_bar {
   margin: 12px 0;

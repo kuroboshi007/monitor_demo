@@ -1,6 +1,17 @@
 <template>
   <div class="page">
-    <div id="map" class="map"></div>
+    <div class="map_box">
+      <div class="_map_main">
+        <!-- 2D地図表示 -->
+        <div id="map" class="map"></div>
+      </div>
+      <div class="_map_sidebar" :width="400">
+        <h3>Select up to 9 assets to monitor</h3>
+        /
+        <p>Click markers on the map to select/deselect assets.</p>
+        <p>Then click the button below to open the monitoring wall.</p>
+      </div>
+    </div>
     <div class="toolbar">
       <div class="picked">
         Selected {{ wall.selectedCount }}
@@ -27,6 +38,13 @@ import {
   postUpdateToMonitor,
   attachCloseChildOnUnload,
 } from "../utils/monitorBridge";
+import {
+  NLayout,
+  NLayoutSider,
+  NLayoutHeader,
+  NLayoutContent,
+  NSpace,
+} from "naive-ui";
 
 const router = useRouter();
 const wall = useWallStore();
@@ -92,11 +110,36 @@ async function goWall() {
 }
 </script>
 
-<style scoped>
+<style>
 .page {
   position: relative;
-  height: 100vh;
+  height: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
 }
+.page_container {
+  padding: 24px;
+}
+.map_box {
+  flex: 1;
+  display: flex;
+  height: 100%;
+  overflow: hidden;
+}
+._map_main {
+  flex: 1;
+  position: relative;
+}
+
+._map_sidebar {
+  width: 400px;
+  padding: 16px;
+  box-sizing: border-box;
+  background: #fff;
+  border-left: 1px solid #ddd;
+}
+
 .map {
   position: absolute;
   inset: 0;
