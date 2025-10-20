@@ -1,21 +1,25 @@
 <template>
-  <!-- 简易视频占位组件：实际项目中请替换为播放视频流的实现 -->
+  <!-- simplified video tile component -->
   <div class="video-tile">
     <p>Video stream for {{ source.id }}</p>
   </div>
 </template>
 
-<script setup lang="ts">
-// 定义组件属性；source 中包含 id、title、hls/webrtc 等信息
+<script setup lang="ts" name="VideoTile">
+// component props definition
 interface Props {
   source: {
     id: string;
     title: string;
-    hls?: string | { url480?: string; url720?: string; url1080?: string } | null;
+    hls?:
+      | string
+      | { url480?: string; url720?: string; url1080?: string }
+      | null;
     webrtc?: { room: string; token: string } | null;
   };
 }
-const props = defineProps<Props>();
+// const props = defineProps<Props>();
+defineProps<Props>();
 </script>
 
 <style scoped>

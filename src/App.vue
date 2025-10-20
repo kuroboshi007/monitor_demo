@@ -1,9 +1,11 @@
 <template>
   <n-config-provider :theme="ui.darkMode ? darkTheme : null">
+    <n-global-style />
     <n-message-provider>
       <n-layout has-sider class="dashboard_main">
-        <!-- sidemenu -->
+        <!-- Side menu or blank placeholder -->
         <n-layout-sider
+          v-if="!isWallPage"
           width="300"
           :style="{
             backgroundColor: isDark ? '#22272e' : 'var(--n-color)',
@@ -18,9 +20,26 @@
             :value="activeKey"
             :options="menuOptions"
             @update:value="handleMenuSelect" />
-          <!-- @update:value="menuValue = $event" /> -->
         </n-layout-sider>
-        <!-- Main -->
+        <!-- When displaying the WallView, render an empty sider to reserve space -->
+        <n-layout-sider
+          v-else
+          width="300"
+          :style="{
+            backgroundColor: isDark ? '#22272e' : 'var(--n-color)',
+          }">
+          <div
+            style="
+              height: 100%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              color: #888;
+            ">
+            Wall View
+          </div>
+        </n-layout-sider>
+        <!-- Main content -->
         <n-layout>
           <n-layout-header
             style="
@@ -29,9 +48,6 @@
               align-items: center;
               padding: 0 16px;
             ">
-            <!-- <div style="font-size: 1.25rem; font-weight: 600">
-          {{ currentLabel }}
-        </div> -->
             <n-breadcrumb separator="/">
               <n-breadcrumb-item
                 v-for="(crumb, index) in breadcrumbs"
@@ -45,7 +61,6 @@
               </n-breadcrumb-item>
             </n-breadcrumb>
             <div style="margin-left: auto">
-              <!-- <n-switch v-model:value="isDark" /> -->
               <n-button v-show="isDark" @click="isDark = false">
                 Dark
               </n-button>
@@ -64,99 +79,69 @@
 </template>
 
 <script setup lang="ts">
-import { darkTheme, NConfigProvider, NMessageProvider } from "naive-ui";
-import { useUIStore } from "./stores/ui";
-import { ref, watch, computed } from "vue";
-import { useRoute, useRouter } from "vue-router";
 import {
+  darkTheme,
+  NConfigProvider,
+  NMessageProvider,
   NLayout,
   NLayoutSider,
   NLayoutHeader,
   NLayoutContent,
   NMenu,
-  NSwitch,
   NButton,
   NAvatar,
   NBreadcrumb,
   NBreadcrumbItem,
+  NGlobalStyle,
 } from "naive-ui";
+import { ref, watch, computed, onMounted } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { useUIStore } from "./stores/ui";
 import logoDark from "@/assets/img/cat_d.png";
 import logoLight from "@/assets/img/cat_l.png";
 
+// route & router
 const router = useRouter();
 const route = useRoute();
+// UI store for dark mode toggle
 const ui = useUIStore();
 const isDark = ref(ui.darkMode);
 
-// when the switch changes, update the global UI store
+// keep UI store in sync
 watch(isDark, (val) => {
   ui.darkMode = val;
 });
 
-// highlighted on first render.
-// const menuValue = ref(route.path);
+// Determine if current route is wall view (no menu)
+const isWallPage = computed(() => route.path.startsWith("/wall"));
 
-// Whenever the route changes, update the selected menu value. This keeps
-// the sidebar and routing in sync when navigation occurs through other
-// means (e.g., programmatically or via the breadcrumb).
-// watch(
-//   () => route.fullPath,
-//   (newPath) => {
-//     menuValue.value = newPath;
-//   },
-//   { immediate: true }
-// );
-
-// sidebar menu items
+// menu options
 interface MenuOption {
   key: string;
   label: string;
+  children?: MenuOption[];
 }
 
-const menuOptions = [
-  {
-    label: "ダッシュボード",
-    key: "dashboard",
-  },
-  {
-    label: "ライセンス管理",
-    key: "license",
-  },
+const menuOptions: MenuOption[] = [
+  { label: "ダッシュボード", key: "dashboard" },
+  { label: "ライセンス管理", key: "license" },
   {
     label: "ユーザ管理",
     key: "users",
     children: [
-      {
-        label: "QQ社ユーザ管理",
-        key: "users/qq",
-      },
-      {
-        label: "施工会社管理",
-        key: "users/company",
-      },
-      {
-        label: "施工会社ユーザ管理",
-        key: "users/company-users",
-      },
+      { label: "QQ社ユーザ管理", key: "users/qq" },
+      { label: "施工会社管理", key: "users/company" },
+      { label: "施工会社ユーザ管理", key: "users/company-users" },
     ],
   },
-  {
-    label: "工事基本情報管理",
-    key: "construction",
-  },
-  {
-    label: "工事管理",
-    key: "construction",
-  },
-  {
-    label: "工事状況管理",
-    key: "construction-status",
-  },
+  { label: "工事基本情報管理", key: "construction" },
+  { label: "工事管理", key: "construction" },
+  { label: "工事状況管理", key: "construction-status" },
 ];
 
+// active menu key based on route
 const activeKey = ref(route.path.split("/")[1] || "dashboard");
 
-// when the current route changes, update the active menu item
 watch(
   () => route.path,
   (newPath) => {
@@ -168,15 +153,7 @@ function handleMenuSelect(key: string) {
   router.push("/" + key);
 }
 
-// map the current title based on the menu item key
-const currentLabel = computed(() => {
-  const found = menuOptions.find((m) => m.key === activeKey.value);
-  return found ? found.label : "";
-});
-
-// Compute breadcrumb items based on the current matched routes. Each
-// breadcrumb item contains a title (from meta.title) and the path to
-// navigate when clicked. The last breadcrumb is not a link.
+// compute breadcrumb items
 const breadcrumbs = computed(() => {
   return route.matched.map((record) => {
     return {
