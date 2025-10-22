@@ -42,8 +42,8 @@
 <script setup lang="ts">
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { computed, onMounted, ref, watch, h } from "vue";
-import { NButton, NAlert, useThemeVars, useMessage } from "naive-ui";
+import { computed, onMounted, ref, watch } from "vue";
+import { NButton, useMessage, useThemeVars } from "naive-ui";
 import { useWallStore } from "../stores/wall";
 import { listAssets, type AssetInfo } from "../services/api";
 import {
@@ -53,20 +53,13 @@ import {
 } from "../utils/monitorBridge";
 
 const message = useMessage();
-// theme vars
 const themeVars = useThemeVars();
 
-onMounted(() => {
-  console.log("themeVars:", useThemeVars().value);
-});
-
-// Store: manage selection and layout information for the monitoring wall
+// state: map and assets
 const wall = useWallStore();
-
-// map container
 const assets = ref<AssetInfo[]>([]);
 
-// MapLibre style: GSI Pale
+// MapLibre style: GSI Pale map style
 const gsiPaleStyle = {
   version: 8,
   sources: {
@@ -88,18 +81,18 @@ const gsiPaleStyle = {
   ],
 };
 
-// Keep DOM refs of markers for quick style sync
+// store references to markers so we can toggle picked state
 const markerEls: Record<string, HTMLElement> = {};
 
-// Compute the current selected count directly from the store
+// computed: number of selected assets
 const selectedCount = computed(() => wall.selected.length);
 
-// Create a plain clone of the selected items so they can be safely posted via postMessage
+// computed: plain clone of selected items (to avoid reactive proxies)
 const selectedPlain = computed(() =>
   wall.selected.map((a) => ({ id: a.id, name: a.name }))
 );
 
-// Payload to send to the monitor wall (includes count and timestamp)
+// compute the payload to send to the monitor
 const selectedPayload = computed(() => ({
   items: selectedPlain.value,
   count: selectedPlain.value.length,
@@ -107,18 +100,15 @@ const selectedPayload = computed(() => ({
 }));
 
 /**
- * Toggle selection for an asset.
- * Works for both sidebar clicks and map marker clicks.
+ * Toggle selection for an asset. Works for both sidebar and marker clicks.
  */
 function selectAsset(a: AssetInfo) {
-  // Check if already selected and enforce a maximum of 9 selections
   const already = wall.isSelected(a.id);
   if (!already && selectedCount.value >= 9) {
     console.warn("Upper limit reached: you can select up to 9 items.");
     return;
   }
   wall.toggleAsset({ id: a.id, name: a.name });
-  // Sync marker styling if a marker exists
   const el = markerEls[a.id];
   if (el) {
     el.classList.toggle("picked", wall.isSelected(a.id));
@@ -126,29 +116,25 @@ function selectAsset(a: AssetInfo) {
 }
 
 /**
- * Open (or reuse) the monitor window and push the latest selection immediately.
+ * Open the monitor wall or reuse an existing one, then immediately send current selection.
  */
 function goMonitor() {
   const url = new URL("/wall", location.origin).toString();
   const child = openOrReuseMonitor(url);
   if (!child) {
-    errorMsg(
+    message.error(
       "The browser blocked the popup. Please allow pop-ups for this site and try again."
     );
     return;
   }
   try {
-    // Send the current selection immediately to the monitor
     postUpdateToMonitor(selectedPayload.value);
   } catch (e) {
     console.error("Failed to post initial payload:", e);
   }
 }
 
-function errorMsg(msg: string) {
-  message.error(msg);
-}
-// Init map & markers
+// initialize the map and markers
 onMounted(async () => {
   attachCloseChildOnUnload();
   const map = new maplibregl.Map({
@@ -173,7 +159,7 @@ onMounted(async () => {
   }
 });
 
-// Broadcast updates to the monitor whenever selection payload changes
+// whenever the selection payload changes, send an update to the monitor window
 watch(selectedPayload, (payload) => {
   try {
     postUpdateToMonitor(payload);
@@ -181,12 +167,6 @@ watch(selectedPayload, (payload) => {
     console.error("Failed to post update payload:", e);
   }
 });
-
-// 保留旧的 goWall 函数供兼容使用（例如在不支持弹窗的环境中直接跳转）
-async function goWall() {
-  await wall.ensureStreams(getStreamsByAssetId);
-  window.location.href = "/wall";
-}
 </script>
 
 <style>
@@ -215,7 +195,6 @@ async function goWall() {
   padding: 16px;
   box-sizing: border-box;
   background: var(--n-color);
-  /* border-left: 1px solid #ddd; */
   overflow-y: auto;
 }
 
@@ -229,7 +208,7 @@ button[disabled] {
   cursor: not-allowed;
 }
 
-/* 资产列表样式 */
+/* asset list styles */
 .asset-list {
   list-style: none;
   padding: 0;
@@ -240,19 +219,18 @@ button[disabled] {
 
 .asset-list li {
   padding: 6px 8px;
-  /* border-bottom: 1px solid #eee; */
   cursor: pointer;
   user-select: none;
 }
 
 .asset-list li:hover {
+  /* Use theme var to highlight on hover */
   background: v-bind("themeVars.hoverColor");
 }
 
 .asset-list li.selected {
   background-color: rgba(24, 160, 88, 0.1);
   font-weight: bold;
-  /* color: var(--n-item-text-color-active-hover); */
   color: v-bind("themeVars.primaryColor");
 }
 </style>

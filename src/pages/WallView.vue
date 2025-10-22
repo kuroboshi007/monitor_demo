@@ -9,7 +9,7 @@
   <div
     class="grid"
     :style="{ gridTemplateColumns: `repeat(${wall.gridCols}, 1fr)` }">
-    <!-- 渲染选中的视频格子 -->
+    <!-- Render selected video tiles -->
     <div
       v-for="t in wall.visibleTiles"
       :key="t.id"
@@ -18,7 +18,7 @@
       <div class="title">{{ t.title }}</div>
       <VideoTile :source="t" />
     </div>
-    <!-- 用占位块填满布局 -->
+    <!-- Fill remaining slots with placeholders -->
     <div
       v-for="i in wall.placeholdersCount"
       :key="'ph' + i"
@@ -35,32 +35,38 @@ import { useWallStore } from "../stores/wall";
 import { getStreamsByAssetId } from "../services/api";
 import VideoTile from "../components/VideoTile.vue";
 
-// 使用 Pinia 存储管理选中项和视频流
+// Use Pinia store to manage selected items and streams
 const wall = useWallStore();
 
-// compute the currently selected item count based on the store
+// compute current selection count from the store
 const selectedCount = computed(() => wall.selected.length);
 
-// 处理来自主控窗口的更新消息：根据传入的数据更新已选资产并加载流信息
+/**
+ * Handle updates sent from the main (map) window.  The data should
+ * include an array of items with id and name.  We clear the current
+ * selection and reselect each item, then load streams for any newly
+ * selected items.
+ */
 function handleUpdate(data: any) {
   if (!data) return;
   const items = Array.isArray(data.items) ? data.items : [];
-  // 清空当前选项并根据接收到的列表重新选择
   wall.clearSelected();
   for (const it of items) {
     wall.toggleAsset({ id: it.id, name: it.name });
   }
-  // 拉取流信息以填充视频格子
+  // fetch stream info for selected items
   wall.ensureStreams(getStreamsByAssetId);
 }
 
 let stop: null | (() => void) = null;
 
 onMounted(() => {
+  // start listening for updates
   stop = listenMonitorUpdates(handleUpdate);
 });
 
 onBeforeUnmount(() => {
+  // clean up listeners when this component is destroyed
   stop?.();
 });
 </script>

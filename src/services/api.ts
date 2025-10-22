@@ -1,5 +1,6 @@
-// 此处提供演示用的 API 函数，实际项目中请替换为真实接口调用
+// Provide demonstration API functions; in real projects, replace with real API calls.
 
+// Type definition for a construction asset (work site).
 export interface AssetInfo {
   id: string;
   name: string;
@@ -7,8 +8,13 @@ export interface AssetInfo {
   lat: number;
 }
 
-// 模拟返回地图上的可选择资产列表
+/**
+ * Simulated API that returns a list of selectable assets on the map.
+ * In a real implementation this would fetch from a backend.
+ */
 export async function listAssets(): Promise<AssetInfo[]> {
+  // The original repo hard‑codes a set of 12 construction sites in Tokyo.
+  // We return them here unchanged.
   return [
     { id: "a1", name: "東京工事A", lng: 139.7671, lat: 35.6812 },
     { id: "a2", name: "東京工事B", lng: 139.77, lat: 35.69 },
@@ -25,8 +31,48 @@ export async function listAssets(): Promise<AssetInfo[]> {
   ];
 }
 
-// 根据 assetId 返回流信息，这里只是示例
+/**
+ * Stream definitions are stored in the local mock/streams.json file.
+ * Each camera key maps to a title and HLS/RTC URLs. To associate assets
+ * with streams we create a simple static mapping: asset a1 → CAM_TOKYO,
+ * a2 → CAM_UENO, etc. If an unknown id is requested, null is returned.
+ */
+import streams from "../../mock/streams.json";
+
+// Map asset ids to camera keys defined in streams.json.  There are 12
+// construction sites (a1–a12) and 12 camera definitions in the streams file.
+const assetToCamera: Record<string, string> = {
+  a1: "CAM_TOKYO",
+  a2: "CAM_UENO",
+  a3: "CAM_SHINAGAWA",
+  a4: "CAM_SHIBUYA",
+  a5: "CAM_SHINJUKU",
+  a6: "CAM_AKIHABARA",
+  a7: "CAM_IKEBUKURO",
+  a8: "CAM_KANDA",
+  a9: "CAM_OCHANOMIZU",
+  a10: "CAM_YURAKUCHO",
+  a11: "CAM_HAMAMATSU",
+  a12: "CAM_KINSHICHO",
+};
+
+/**
+ * Given an asset id, return the corresponding stream information.
+ * The returned object includes a title and HLS/RTC details.  If no mapping
+ * exists for the given id, a fallback with null streams is provided.
+ */
 export async function getStreamsByAssetId(id: string): Promise<any> {
+  const camKey = assetToCamera[id];
+  if (camKey && (streams as any)[camKey]) {
+    // Clone the stream information to avoid mutating the imported data.
+    const { title, hls, webrtc } = (streams as any)[camKey];
+    return {
+      title,
+      hls,
+      webrtc,
+    };
+  }
+  // Fallback: return a placeholder with the id as title and no streams.
   return {
     title: `Stream ${id}`,
     hls: null,

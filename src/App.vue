@@ -94,28 +94,29 @@ import {
   NBreadcrumbItem,
   NGlobalStyle,
 } from "naive-ui";
-import { ref, watch, computed, onMounted } from "vue";
+import { ref, watch, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useUIStore } from "./stores/ui";
 import logoDark from "@/assets/img/cat_d.png";
 import logoLight from "@/assets/img/cat_l.png";
 
-// route & router
+// router hooks
 const router = useRouter();
 const route = useRoute();
+
 // UI store for dark mode toggle
 const ui = useUIStore();
 const isDark = ref(ui.darkMode);
 
-// keep UI store in sync
+// keep store synced with state
 watch(isDark, (val) => {
   ui.darkMode = val;
 });
 
-// Determine if current route is wall view (no menu)
+// determine if current route is the wall view
 const isWallPage = computed(() => route.path.startsWith("/wall"));
 
-// menu options
+// define menu options
 interface MenuOption {
   key: string;
   label: string;
@@ -139,7 +140,7 @@ const menuOptions: MenuOption[] = [
   { label: "工事状況管理", key: "construction-status" },
 ];
 
-// active menu key based on route
+// active menu key based on current route
 const activeKey = ref(route.path.split("/")[1] || "dashboard");
 
 watch(
@@ -149,15 +150,16 @@ watch(
   }
 );
 
+// handle menu selection: navigate to the selected page
 function handleMenuSelect(key: string) {
   router.push("/" + key);
 }
 
-// compute breadcrumb items
+// compute breadcrumbs based on matched routes
 const breadcrumbs = computed(() => {
   return route.matched.map((record) => {
     return {
-      title: record.meta.title || record.name,
+      title: (record.meta?.title as string) || (record.name as string),
       path: record.path,
     };
   });

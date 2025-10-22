@@ -5,15 +5,15 @@ export type Asset = { id: string; name: string };
 export type Tile = {
   id: string;
   title: string;
-  // HLS 可以是简单字符串或分档对象，这里都接受
+  // HLS can be a simple string or a resolution map; all accepted.
   hls?: string | { url480?: string; url720?: string; url1080?: string } | null;
   webrtc?: { room: string; token: string } | null;
 };
 
 type State = {
   mode: 1 | 4 | 9;
-  selected: Asset[]; // 已选的点（保持顺序，最多 9）
-  streams: Record<string, Tile>; // 每个 assetId 的流信息缓存
+  selected: Asset[]; // Ordered list of selected points (max 9)
+  streams: Record<string, Tile>; // Cached stream info for each asset
 };
 
 export const useWallStore = defineStore('wall', {
@@ -24,15 +24,15 @@ export const useWallStore = defineStore('wall', {
   }),
 
   getters: {
-    // 栅格列数
+    // grid column count
     gridCols: (s): 1 | 2 | 3 => (s.mode === 9 ? 3 : s.mode === 4 ? 2 : 1),
-    // 已选数量
+    // selected item count
     selectedCount: (s): number => s.selected.length,
-    // 根据 selected + streams 生成可播放的 tile 列表（不裁剪）
+    // merge selected and streams into a playable tile list (no clipping)
     tiles: (s): Tile[] =>
       s.selected.map((a) => {
         const st = s.streams[a.id];
-        // 统一取一个可用的 HLS URL（demo 用 720 优先）
+        // choose a single HLS URL (prefer 720p fallback to 480 then 1080)
         const hls =
           typeof st?.hls === 'string'
             ? st?.hls
@@ -44,26 +44,26 @@ export const useWallStore = defineStore('wall', {
           webrtc: st?.webrtc ?? null
         };
       }),
-    // 受布局影响的“可见”tiles（渲染用）
+    // tiles visible based on the current layout
     visibleTiles(): Tile[] {
       const limit = this.mode === 9 ? 9 : this.mode === 4 ? 4 : 1;
       return this.tiles.slice(0, limit);
     },
-    // 补齐占位格子的数量（让 4→9 后看起来是完整九宫格）
+    // number of placeholder blocks needed to fill out the layout
     placeholdersCount(): number {
       const limit = this.mode === 9 ? 9 : this.mode === 4 ? 4 : 1;
       return Math.max(0, limit - this.visibleTiles.length);
     },
-    // 判断是否已选（给 ConstructionStatus.vue 用）
+    // check if an asset is selected (used in ConstructionStatus.vue)
     isSelected: (s) => (id: string) => s.selected.some((x) => x.id === id)
   },
 
   actions: {
-    // 切换布局
+    // change the layout mode (1, 4, 9)
     setMode(m: 1 | 4 | 9) {
       this.mode = m;
     },
-    // 选择/取消选择点（最多 9）
+    // toggle selection of a point (max 9)
     toggleAsset(a: Asset) {
       const i = this.selected.findIndex((x) => x.id === a.id);
       if (i >= 0) {
@@ -72,20 +72,20 @@ export const useWallStore = defineStore('wall', {
         this.selected.push(a);
       }
     },
-    // 手动移除某个已选点
+    // remove a selected point manually
     removeAsset(id: string) {
       const i = this.selected.findIndex((x) => x.id === id);
       if (i >= 0) this.selected.splice(i, 1);
     },
-    // 清空选择
+    // clear all selections
     clearSelected() {
       this.selected = [];
     },
-    // 写入某个点的流缓存
+    // cache stream info for an asset
     setStreamFor(id: string, tile: Tile) {
       this.streams[id] = { ...tile, id };
     },
-    // 为尚未缓存的选中项拉取流信息（传入 API 加载器）
+    // ensure streams are loaded for all selected items using the provided loader
     async ensureStreams(loader: (id: string) => Promise<any>) {
       for (const a of this.selected) {
         if (!this.streams[a.id]) {
@@ -99,7 +99,7 @@ export const useWallStore = defineStore('wall', {
         }
       }
     },
-    // 双击放大：把该项移到 selected 的第 1 位并切成单格
+    // double-click to focus a tile: move it to the first slot and switch to single mode
     focus(id: string) {
       this.mode = 1;
       const idx = this.selected.findIndex((x) => x.id === id);
@@ -110,6 +110,6 @@ export const useWallStore = defineStore('wall', {
     }
   },
 
-  // 开启状态持久化（如果安装了 pinia-plugin-persistedstate）
+  // enable persistence if pinia-plugin-persistedstate is installed
   persist: true
 });

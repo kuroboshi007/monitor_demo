@@ -9,6 +9,6 @@ export const useUIStore = defineStore('ui', {
       this.darkMode = !this.darkMode;
     }
   },
-  // 支持持久化存储（需安装 pinia-plugin-persistedstate 插件）
+  // support persisted state if pinia-plugin-persistedstate is installed
   persist: true
 });

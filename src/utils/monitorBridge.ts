@@ -1,10 +1,13 @@
 // src/utils/monitorBridge.ts
-// 负责：打开/复用监控窗口、发送更新、随主窗关闭而关闭子窗
+// Responsible for opening/reusing the monitor window, sending updates,
+// and closing the child window when the main window unloads.
 
 const WINDOW_NAME = "MonitorWindow";
-const WINDOW_FEATURES = "width=1280,height=800,noopener,noreferrer";
+// We deliberately omit noopener/noreferrer to allow storing a reference
+// to the child window and reusing it across button clicks. Without
+// noopener the newly opened window remains accessible via __monitorWindow.
+const WINDOW_FEATURES = "width=1280,height=800";
 
-// 把引用挂在 window 上，避免热更新或组件卸载导致丢失
 declare global {
   interface Window {
     __monitorWindow?: Window | null;
@@ -12,7 +15,8 @@ declare global {
   }
 }
 
-// 保证单例 BroadcastChannel（可选，用于双向/兜底同步）
+// Ensure a single BroadcastChannel instance.  The channel name must be
+// consistent between the parent and child windows.
 function getChannel() {
   if (!window.__monitorChannel) {
     window.__monitorChannel = new BroadcastChannel("monitor_sync");
@@ -20,43 +24,63 @@ function getChannel() {
   return window.__monitorChannel;
 }
 
+/**
+ * Open the monitor window or reuse an existing one.  If the window
+ * already exists and is not closed, it is focused and its location is
+ * updated to the provided URL (ensuring navigation from other pages).
+ * Otherwise a new window is opened.  The returned reference is also
+ * stored on the global window object.
+ */
 export function openOrReuseMonitor(url: string) {
-  // 已存在且未被用户手动关掉 → 复用并聚焦
   if (window.__monitorWindow && !window.__monitorWindow.closed) {
     try {
-      window.__monitorWindow.focus();
-      return window.__monitorWindow;
+      const child = window.__monitorWindow;
+      child.focus();
+      // Navigate the existing window if its current URL differs.
+      // Some browsers will block if URL is the same; this check avoids unnecessary reloads.
+      if (child.location.href !== url) {
+        child.location.href = url;
+      }
+      return child;
     } catch {
-      // ignore
+      // If any error occurs (e.g. cross‑domain), fall back to opening a new window.
     }
   }
-  // 打开新窗口
   const w = window.open(url, WINDOW_NAME, WINDOW_FEATURES);
   window.__monitorWindow = w ?? null;
   return w;
 }
 
-// 主窗给子窗发送更新（postMessage）
+/**
+ * Send an update payload to the monitor window.  The payload should be
+ * a plain JSON object that can be cloned across the channel.  If the
+ * monitor window exists, a postMessage is sent directly; regardless, a
+ * BroadcastChannel message is also emitted as a fallback.
+ */
 export function postUpdateToMonitor(payload: unknown) {
   const child = window.__monitorWindow;
   if (child && !child.closed) {
-    child.postMessage(
-      { type: "update", data: payload },
-      window.location.origin
-    );
+    try {
+      child.postMessage({ type: "update", data: payload }, window.location.origin);
+    } catch {
+      // ignore failures: will rely on BroadcastChannel
+    }
   }
-  // 兜底用频道广播（子窗也会监听）
   getChannel().postMessage({ type: "update", data: payload });
 }
 
-// 主窗关闭时，主动关闭子窗
+/**
+ * Attach a handler that closes the monitor window when the main window
+ * unloads (e.g. user closes the page or navigates away).  This helps
+ * enforce a one‑to‑one relationship between the parent and child.
+ */
 export function attachCloseChildOnUnload() {
   const handler = () => {
     if (window.__monitorWindow && !window.__monitorWindow.closed) {
       try {
         window.__monitorWindow.close();
       } catch {
-        // 某些浏览器可能拦截，忽略
+        /* ignore */
       }
     }
     try {
@@ -68,26 +92,28 @@ export function attachCloseChildOnUnload() {
   window.addEventListener("beforeunload", handler, { once: true });
 }
 
-// 供子窗使用：统一监听更新
+/**
+ * Listener for child windows: listens for messages on both postMessage
+ * and BroadcastChannel and invokes the provided callback when an update
+ * payload is received.  Returns a function to remove the listeners.
+ */
 export function listenMonitorUpdates(onUpdate: (data: any) => void) {
   const origin = window.location.origin;
 
   const onMsg = (evt: MessageEvent) => {
     if (evt.origin !== origin) return;
-    const { type, data } = evt.data || {};
+    const { type, data } = (evt.data as any) || {};
     if (type === "update") onUpdate(data);
   };
   window.addEventListener("message", onMsg);
 
-  // 频道兜底
   const ch = getChannel();
   const onCh = (evt: MessageEvent) => {
-    const { type, data } = evt.data || {};
+    const { type, data } = (evt.data as any) || {};
     if (type === "update") onUpdate(data);
   };
   ch.addEventListener("message", onCh as any);
 
-  // 返回卸载函数
   return () => {
     window.removeEventListener("message", onMsg);
     ch.removeEventListener("message", onCh as any);
