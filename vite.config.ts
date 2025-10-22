@@ -2,7 +2,7 @@ import { defineConfig } from "vite";
 import vue from "@vitejs/plugin-vue";
 import path from "path";
 
-// Vite 配置，可根据需要扩展
+// Vite configuration
 export default defineConfig({
   plugins: [vue()],
   server: {

@@ -61,7 +61,10 @@ export function postUpdateToMonitor(payload: unknown) {
   const child = window.__monitorWindow;
   if (child && !child.closed) {
     try {
-      child.postMessage({ type: "update", data: payload }, window.location.origin);
+      child.postMessage(
+        { type: "update", data: payload },
+        window.location.origin
+      );
     } catch {
       // ignore failures: will rely on BroadcastChannel
     }
