@@ -30,7 +30,7 @@
 
 <script setup lang="ts">
 import { onMounted, onBeforeUnmount, computed } from "vue";
-import { listenMonitorUpdates } from "../utils/monitorBridge";
+import { listenMonitorUpdates, requestLatestUpdate } from "../utils/monitorBridge";
 import { useWallStore } from "../stores/wall";
 import { getStreamsByAssetId } from "../services/api";
 import VideoTile from "../components/VideoTile.vue";
@@ -63,6 +63,10 @@ let stop: null | (() => void) = null;
 onMounted(() => {
   // start listening for updates
   stop = listenMonitorUpdates(handleUpdate);
+  // Immediately request the latest data from the parent in case it was
+  // sent before this window finished mounting.  The parent will
+  // respond with the cached payload.
+  requestLatestUpdate();
 });
 
 onBeforeUnmount(() => {

@@ -23,7 +23,8 @@
               v-for="a in assets"
               :key="a.id"
               :class="{ selected: wall.isSelected(a.id) }"
-              @click="selectAsset(a)">
+              @click="selectAsset(a)"
+            >
               {{ a.name }}
             </li>
           </ul>

@@ -37,7 +37,10 @@ export async function listAssets(): Promise<AssetInfo[]> {
  * with streams we create a simple static mapping: asset a1 → CAM_TOKYO,
  * a2 → CAM_UENO, etc. If an unknown id is requested, null is returned.
  */
-import streams from "../../mock/streams.json";
+// Import the mock stream definitions from the assets folder.  In a real
+// application this could be fetched from an API.  The path points to
+// src/assets/mock/streams.json relative to this file.
+import streams from "../assets/mock/streams.json";
 
 // Map asset ids to camera keys defined in streams.json.  There are 12
 // construction sites (a1–a12) and 12 camera definitions in the streams file.

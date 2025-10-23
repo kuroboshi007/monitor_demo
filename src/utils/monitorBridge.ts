@@ -15,13 +15,36 @@ declare global {
   }
 }
 
+// Store the most recently sent payload so that a new monitor window can
+// request the latest state immediately.  When the parent page sends
+// updates via postUpdateToMonitor, this value is updated.
+let lastPayload: any = null;
+
+// Flag to ensure we only attach the request‑update listener once.
+let channelRequestHandlerAttached = false;
+
 // Ensure a single BroadcastChannel instance.  The channel name must be
 // consistent between the parent and child windows.
 function getChannel() {
   if (!window.__monitorChannel) {
     window.__monitorChannel = new BroadcastChannel("monitor_sync");
   }
-  return window.__monitorChannel;
+  const ch = window.__monitorChannel;
+  // Attach a listener that responds to 'requestUpdate' messages by
+  // re‑sending the last known payload. Only attach this listener once.
+  if (!channelRequestHandlerAttached) {
+    ch.addEventListener("message", (evt: MessageEvent) => {
+      const { type } = (evt.data as any) || {};
+      if (type === "requestUpdate" && lastPayload != null) {
+        // When a monitor page asks for an update, send the cached payload
+        // through the normal update mechanism. This will also update
+        // lastPayload again, but with the same value.
+        postUpdateToMonitor(lastPayload);
+      }
+    });
+    channelRequestHandlerAttached = true;
+  }
+  return ch;
 }
 
 /**
@@ -58,18 +81,26 @@ export function openOrReuseMonitor(url: string) {
  * BroadcastChannel message is also emitted as a fallback.
  */
 export function postUpdateToMonitor(payload: unknown) {
+  // Remember the payload so it can be sent to a newly opened monitor
+  lastPayload = payload;
   const child = window.__monitorWindow;
   if (child && !child.closed) {
     try {
-      child.postMessage(
-        { type: "update", data: payload },
-        window.location.origin
-      );
+      child.postMessage({ type: "update", data: payload }, window.location.origin);
     } catch {
       // ignore failures: will rely on BroadcastChannel
     }
   }
   getChannel().postMessage({ type: "update", data: payload });
+}
+
+/**
+ * Request the latest selection data from the parent page.  The parent
+ * will respond by re‑emitting the last sent payload.  This should be
+ * called by the monitor page on mount to ensure it has initial data.
+ */
+export function requestLatestUpdate() {
+  getChannel().postMessage({ type: "requestUpdate" });
 }
 
 /**

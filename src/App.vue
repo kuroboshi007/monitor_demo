@@ -113,8 +113,15 @@ watch(isDark, (val) => {
   ui.darkMode = val;
 });
 
-// determine if current route is the wall view
-const isWallPage = computed(() => route.path.startsWith("/wall"));
+// determine if current route is the wall view.  We use window.location
+// directly as a fallback so that the correct layout is applied
+// immediately when opening a new monitor window, before vue‑router
+// finishes loading the route.  This prevents the side menu from
+// flashing the default menu for a brief moment.
+const isWallPage = computed(() => {
+  const path = route.path || window.location.pathname;
+  return path.startsWith("/wall");
+});
 
 // define menu options
 interface MenuOption {
