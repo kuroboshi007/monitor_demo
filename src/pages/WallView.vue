@@ -1,18 +1,18 @@
 <template>
   <div class="topbar">
-    <!-- Buttons to switch layout: 1, 4, or 9 grid cells -->
+    <!-- Buttons to switch layout: 1, 3, or 9 grid cells -->
     <button @click="wall.setMode(1)">1</button>
-    <button @click="wall.setMode(4)">4</button>
+    <button @click="wall.setMode(3)">3</button>
     <button @click="wall.setMode(9)">9</button>
     <span class="hint">Selected: {{ selectedCount }}</span>
   </div>
   <div
     class="grid"
     :style="{ gridTemplateColumns: `repeat(${wall.gridCols}, 1fr)` }">
-    <!-- Render selected video tiles -->
+    <!-- Render replicated video tiles based on the current selection -->
     <div
-      v-for="t in wall.visibleTiles"
-      :key="t.id"
+      v-for="t in visibleTiles"
+      :key="t.replicateId ?? t.id"
       class="tile-wrap"
       @dblclick="wall.focus(t.id)">
       <div class="title">{{ t.title }}</div>
@@ -20,10 +20,10 @@
     </div>
     <!-- Fill remaining slots with placeholders -->
     <div
-      v-for="i in wall.placeholdersCount"
+      v-for="i in placeholdersCount"
       :key="'ph' + i"
       class="placeholder">
-      (Empty) Add back to the map
+      <!-- intentionally left blank for unused slots -->
     </div>
   </div>
 </template>
@@ -72,6 +72,43 @@ onMounted(() => {
 onBeforeUnmount(() => {
   // clean up listeners when this component is destroyed
   stop?.();
+});
+
+// Duplicate each tile three times for multi‑angle display.  We attach a
+// unique replicateId to each copy so that Vue can track them separately.
+const replicatedTiles = computed(() => {
+  const res: any[] = [];
+  wall.tiles.forEach((t) => {
+    for (let i = 0; i < 3; i++) {
+      res.push({ ...t, replicateId: `${t.id}-${i}` });
+    }
+  });
+  return res;
+});
+
+// Determine which tiles to display based on the current mode.
+// Triple mode (3) shows only three replicated tiles (three camera angles)
+// even though the CSS grid has four cells; the last cell is left empty.
+// Nine mode displays up to nine unique selected items, and single mode
+// displays just the first.
+const visibleTiles = computed(() => {
+  if (wall.mode === 9) {
+    // For 9‑view, show unique tiles (no replication)
+    return wall.tiles.slice(0, 9);
+  }
+  if (wall.mode === 3) {
+    // For 3‑view, show only the first three replicated tiles
+    return replicatedTiles.value.slice(0, 3);
+  }
+  // Single view
+  return wall.tiles.slice(0, 1);
+});
+
+// Compute how many empty slots to show in order to fill the grid layout.
+const placeholdersCount = computed(() => {
+  // Determine total grid cell count for each mode
+  const totalCells = wall.mode === 9 ? 9 : wall.mode === 3 ? 4 : 1;
+  return Math.max(0, totalCells - visibleTiles.value.length);
 });
 </script>
 

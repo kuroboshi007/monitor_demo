@@ -28,11 +28,9 @@ interface Props {
   source: {
     id: string;
     title: string;
-    hls?:
-      | string
-      | { url480?: string; url720?: string; url1080?: string }
-      | null;
+    hls?: string | { url480?: string; url720?: string; url1080?: string } | null;
     webrtc?: { room: string; token: string } | null;
+    replicateId?: string;
   };
 }
 

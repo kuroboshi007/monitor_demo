@@ -42,16 +42,10 @@ const routes = [
   {
     path: "/users",
     name: "UserManager",
-    // We do not specify a component here since /users acts as a parent for
-    // nested routes. When a child route is matched, its component will be
-    // rendered in the router‑view of the parent layout.
     component: UserManager,
     children: [
       {
         path: "/users",
-        // When navigating to /users without a specific child, default to the
-        // QQ user manager. This ensures that clicking the parent menu shows
-        // meaningful content instead of a blank page.
         redirect: "/users/qq",
       },
     ],
@@ -65,7 +59,6 @@ const routes = [
   {
     path: "/users/company",
     name: "UserCompanyManager",
-    // Reuse the existing CompanyManager component for managing companies.
     component: CompanyManager,
     meta: { title: "Company Manager" },
   },
@@ -75,8 +68,10 @@ const routes = [
     component: CompanyUserManager,
     meta: { title: "Company User Manager" },
   },
-  // WallView is retained as a child route under /users for demonstration.
-  { path: "/wall", component: WallView },
+  {
+    path: "/wall",
+    component: WallView,
+  },
 ];
 
 const router = createRouter({

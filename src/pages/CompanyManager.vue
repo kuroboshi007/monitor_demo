@@ -101,7 +101,7 @@ function createColumns(): DataTableColumns<RowData> {
         if (!isEditing) return row.companyName;
         return h(NInput, {
           value: editableRow.companyName as string,
-          "onUpdate:value": (v) => (editableRow.companyName = v),
+          "onUpdate:value": (v: string) => (editableRow.companyName = v),
           placeholder: "Company name",
         });
       },
@@ -130,7 +130,7 @@ function createColumns(): DataTableColumns<RowData> {
         return isEditing
           ? h(NInput, {
               value: editableRow.contactName as string,
-              "onUpdate:value": (v) => (editableRow.contactName = v),
+              "onUpdate:value": (v: string) => (editableRow.contactName = v),
               placeholder: "Contact name",
             })
           : row.contactName;
@@ -146,7 +146,7 @@ function createColumns(): DataTableColumns<RowData> {
         return isEditing
           ? h(NInput, {
               value: editableRow.phone as string,
-              "onUpdate:value": (v) => (editableRow.phone = v),
+              "onUpdate:value": (v: string) => (editableRow.phone = v),
               placeholder: "Phone",
             })
           : row.phone;
@@ -162,7 +162,7 @@ function createColumns(): DataTableColumns<RowData> {
         return isEditing
           ? h(NInput, {
               value: editableRow.address as string,
-              "onUpdate:value": (v) => (editableRow.address = v),
+              "onUpdate:value": (v: string) => (editableRow.address = v),
               placeholder: "Address",
             })
           : row.address;
@@ -230,8 +230,7 @@ function createColumns(): DataTableColumns<RowData> {
                       type: "error",
                     },
                     {
-                      icon: () =>
-                        h(NIcon, null, { default: () => h(TrashBin) }),
+                      icon: () => h(NIcon, null, { default: () => h(TrashBin) }),
                     }
                   ),
                 default: () => `Confirm delete ${row.companyName}?`,
