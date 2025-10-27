@@ -1,7 +1,7 @@
 <template>
-  <div style="padding: 24px;">
-    <h1>User Management</h1>
-    <p>This page will implement user management functionality.</p>
+  <div style="padding: 24px">
+    <h1>ユーザ管理</h1>
+    <p>このページではユーザ管理機能を実装します。</p>
   </div>
 </template>
 

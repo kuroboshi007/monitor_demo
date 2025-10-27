@@ -8,14 +8,9 @@ export type Tile = {
   // HLS can be a simple string or a resolution map; all accepted.
   hls?: string | { url480?: string; url720?: string; url1080?: string } | null;
   webrtc?: { room: string; token: string } | null;
-  // replicateId is used only by the view layer when duplicating tiles for
-  // multi‑angle display.  It is optional and not stored in state.
   replicateId?: string;
 };
 
-// The wall can display videos in three modes: single (1),
-// triple (3) for multi‑angle view, or nine (9) for a 3×3 grid.
-// Mode 4 has been removed entirely.
 type Mode = 1 | 3 | 9;
 
 type State = {
@@ -59,16 +54,11 @@ export const useWallStore = defineStore("wall", {
       }),
     // tiles visible based on the current layout (limit the number of tiles)
     visibleTiles(): Tile[] {
-      // Each mode determines how many unique items to display.  The UI may further
-      // duplicate these tiles (e.g. triple mode shows only the first item three times).
       const limit = this.mode === 9 ? 9 : this.mode === 3 ? 3 : 1;
       return this.tiles.slice(0, limit);
     },
     // number of placeholder blocks needed to fill out the layout
     placeholdersCount(): number {
-      // Determine total grid cells for each mode: 9→9 cells (3×3),
-      // 3→4 cells (2×2 grid), and 1→1 cell.  Subtract the number of
-      // visible unique tiles to calculate how many placeholders are needed.
       const totalCells = this.mode === 9 ? 9 : this.mode === 3 ? 3 : 1;
       return Math.max(0, totalCells - this.visibleTiles.length);
     },
@@ -77,7 +67,6 @@ export const useWallStore = defineStore("wall", {
   },
 
   actions: {
-    // change the layout mode (1, 3, 4, 9)
     // Change the layout mode (1, 3 or 9)
     setMode(m: Mode) {
       this.mode = m;

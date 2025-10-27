@@ -9,12 +9,18 @@
           width="300"
           :style="{
             backgroundColor: isDark ? '#22272e' : 'var(--n-color)',
-          }">
+          }"
+          :collapsed="collapsed"
+          collapse-mode="width"
+          :collapsed-width="64"
+          show-trigger
+          @collapse="collapsed = true"
+          @expand="collapsed = false">
           <div class="title_box">
             <div class="logo">
               <n-avatar size="medium" :src="isDark ? logoDark : logoLight" />
             </div>
-            <h2>Monitoring System</h2>
+            <h2 v-show="!collapsed">Monitoring System</h2>
           </div>
           <n-menu
             :value="activeKey"
@@ -93,12 +99,25 @@ import {
   NBreadcrumb,
   NBreadcrumbItem,
   NGlobalStyle,
+  NIcon,
+  useMessage,
+  useNotification,
 } from "naive-ui";
-import { ref, watch, computed } from "vue";
+import { ref, watch, computed, h } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useUIStore } from "./stores/ui";
 import logoDark from "@/assets/img/cat_d.png";
 import logoLight from "@/assets/img/cat_l.png";
+import {
+  FileTrayFull as FileTrayFullIcon,
+  FileTray as FileTrayIcon,
+  HomeOutline as HomeIcon,
+  PersonOutline as PersonIcon,
+  Key as KeyIcon,
+  Map as MapIcon,
+} from "@vicons/ionicons5";
+import type { MenuOption } from "naive-ui";
+import type { Component } from "vue";
 
 // router hooks
 const router = useRouter();
@@ -107,6 +126,10 @@ const route = useRoute();
 // UI store for dark mode toggle
 const ui = useUIStore();
 const isDark = ref(ui.darkMode);
+
+const collapsed = ref(false);
+const message = useMessage();
+const notification = useNotification();
 
 // keep store synced with state
 watch(isDark, (val) => {
@@ -130,21 +153,38 @@ interface MenuOption {
   children?: MenuOption[];
 }
 
+function renderIcon(icon: Component) {
+  return () => h(NIcon, null, { default: () => h(icon) });
+}
+
 const menuOptions: MenuOption[] = [
-  { label: "ダッシュボード", key: "dashboard" },
-  { label: "ライセンス管理", key: "license" },
+  { label: "ダッシュボード", key: "dashboard", icon: renderIcon(HomeIcon) },
+  { label: "ライセンス管理", key: "license", icon: renderIcon(KeyIcon) },
   {
     label: "ユーザ管理",
     key: "users",
+    icon: renderIcon(PersonIcon),
     children: [
       { label: "QQ社ユーザ管理", key: "users/qq" },
       { label: "施工会社管理", key: "users/company" },
       { label: "施工会社ユーザ管理", key: "users/company-users" },
     ],
   },
-  { label: "工事基本情報管理", key: "construction" },
-  { label: "工事管理", key: "construction" },
-  { label: "工事状況管理", key: "construction-status" },
+  {
+    label: "工事基本情報管理",
+    key: "construction-basic",
+    icon: renderIcon(FileTrayFullIcon),
+  },
+  {
+    label: "工事管理",
+    key: "construction",
+    icon: renderIcon(FileTrayIcon),
+  },
+  {
+    label: "工事状況管理",
+    key: "construction-status",
+    icon: renderIcon(MapIcon),
+  },
 ];
 
 // active menu key based on current route
@@ -171,4 +211,37 @@ const breadcrumbs = computed(() => {
     };
   });
 });
+
+function handleClick2() {
+  let markAsRead = false;
+  const n = notification.create({
+    title: "Satisfaction",
+    content: `I cant get no satisfaction
+I cant get no satisfaction
+Cause I try and I try and I try and I try
+I cant get no, I cant get no`,
+    meta: "2019-5-27 15:11",
+    action: () =>
+      h(
+        NButton,
+        {
+          text: true,
+          type: "primary",
+          onClick: () => {
+            markAsRead = true;
+            n.destroy();
+          },
+        },
+        {
+          default: () => "Mark as Read",
+        }
+      ),
+    onClose: () => {
+      if (!markAsRead) {
+        message.warning("Please mark as read");
+        return false;
+      }
+    },
+  });
+}
 </script>

@@ -1,11 +1,4 @@
-// src/utils/monitorBridge.ts
-// Responsible for opening/reusing the monitor window, sending updates,
-// and closing the child window when the main window unloads.
-
 const WINDOW_NAME = "MonitorWindow";
-// We deliberately omit noopener/noreferrer to allow storing a reference
-// to the child window and reusing it across button clicks. Without
-// noopener the newly opened window remains accessible via __monitorWindow.
 const WINDOW_FEATURES = "width=1280,height=800";
 
 declare global {
@@ -15,30 +8,20 @@ declare global {
   }
 }
 
-// Store the most recently sent payload so that a new monitor window can
-// request the latest state immediately.  When the parent page sends
-// updates via postUpdateToMonitor, this value is updated.
 let lastPayload: any = null;
 
 // Flag to ensure we only attach the request‑update listener once.
 let channelRequestHandlerAttached = false;
 
-// Ensure a single BroadcastChannel instance.  The channel name must be
-// consistent between the parent and child windows.
 function getChannel() {
   if (!window.__monitorChannel) {
     window.__monitorChannel = new BroadcastChannel("monitor_sync");
   }
   const ch = window.__monitorChannel;
-  // Attach a listener that responds to 'requestUpdate' messages by
-  // re‑sending the last known payload. Only attach this listener once.
   if (!channelRequestHandlerAttached) {
     ch.addEventListener("message", (evt: MessageEvent) => {
       const { type } = (evt.data as any) || {};
       if (type === "requestUpdate" && lastPayload != null) {
-        // When a monitor page asks for an update, send the cached payload
-        // through the normal update mechanism. This will also update
-        // lastPayload again, but with the same value.
         postUpdateToMonitor(lastPayload);
       }
     });
@@ -47,13 +30,6 @@ function getChannel() {
   return ch;
 }
 
-/**
- * Open the monitor window or reuse an existing one.  If the window
- * already exists and is not closed, it is focused and its location is
- * updated to the provided URL (ensuring navigation from other pages).
- * Otherwise a new window is opened.  The returned reference is also
- * stored on the global window object.
- */
 export function openOrReuseMonitor(url: string) {
   if (window.__monitorWindow && !window.__monitorWindow.closed) {
     try {
@@ -86,7 +62,10 @@ export function postUpdateToMonitor(payload: unknown) {
   const child = window.__monitorWindow;
   if (child && !child.closed) {
     try {
-      child.postMessage({ type: "update", data: payload }, window.location.origin);
+      child.postMessage(
+        { type: "update", data: payload },
+        window.location.origin
+      );
     } catch {
       // ignore failures: will rely on BroadcastChannel
     }

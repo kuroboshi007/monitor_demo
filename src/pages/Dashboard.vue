@@ -1,7 +1,7 @@
 <template>
-  <div style="padding: 24px;">
-    <h1>Dashboard</h1>
-    <p>Welcome to the dashboard. Here you can display various statistics.</p>
+  <div style="padding: 24px">
+    <h1>ホームページ</h1>
+    <p>ダッシュボードへようこそ。ここではさまざまな統計情報を表示できます。</p>
   </div>
 </template>
 

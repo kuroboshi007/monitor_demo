@@ -1,7 +1,7 @@
 <template>
   <div style="padding: 24px">
-    <h1>QQ User Manager</h1>
-    <p>Manage QQ users from this page.</p>
+    <h1>QQ社ユーザ管理</h1>
+    <p>このページではQQ社のユーザを管理します。</p>
   </div>
 </template>
 

@@ -19,10 +19,7 @@
       <VideoTile :source="t" />
     </div>
     <!-- Fill remaining slots with placeholders -->
-    <div
-      v-for="i in placeholdersCount"
-      :key="'ph' + i"
-      class="placeholder">
+    <div v-for="i in placeholdersCount" :key="'ph' + i" class="placeholder">
       <!-- intentionally left blank for unused slots -->
     </div>
   </div>
@@ -30,7 +27,10 @@
 
 <script setup lang="ts">
 import { onMounted, onBeforeUnmount, computed } from "vue";
-import { listenMonitorUpdates, requestLatestUpdate } from "../utils/monitorBridge";
+import {
+  listenMonitorUpdates,
+  requestLatestUpdate,
+} from "../utils/monitorBridge";
 import { useWallStore } from "../stores/wall";
 import { getStreamsByAssetId } from "../services/api";
 import VideoTile from "../components/VideoTile.vue";
@@ -63,9 +63,6 @@ let stop: null | (() => void) = null;
 onMounted(() => {
   // start listening for updates
   stop = listenMonitorUpdates(handleUpdate);
-  // Immediately request the latest data from the parent in case it was
-  // sent before this window finished mounting.  The parent will
-  // respond with the cached payload.
   requestLatestUpdate();
 });
 
@@ -74,8 +71,6 @@ onBeforeUnmount(() => {
   stop?.();
 });
 
-// Duplicate each tile three times for multi‑angle display.  We attach a
-// unique replicateId to each copy so that Vue can track them separately.
 const replicatedTiles = computed(() => {
   const res: any[] = [];
   wall.tiles.forEach((t) => {
@@ -87,10 +82,6 @@ const replicatedTiles = computed(() => {
 });
 
 // Determine which tiles to display based on the current mode.
-// Triple mode (3) shows only three replicated tiles (three camera angles)
-// even though the CSS grid has four cells; the last cell is left empty.
-// Nine mode displays up to nine unique selected items, and single mode
-// displays just the first.
 const visibleTiles = computed(() => {
   if (wall.mode === 9) {
     // For 9‑view, show unique tiles (no replication)

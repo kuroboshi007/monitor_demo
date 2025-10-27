@@ -3,6 +3,7 @@ import { createRouter, createWebHistory } from "vue-router";
 const Dashboard = () => import("../pages/Dashboard.vue");
 const LicenseManager = () => import("../pages/LicenseManager.vue");
 const ConstructionManager = () => import("../pages/ConstructionManager.vue");
+const ConstructionBasic = () => import("../pages/ConstructionBasic.vue");
 const ConstructionStatus = () => import("../pages/ConstructionStatus.vue");
 const WallView = () => import("../pages/WallView.vue");
 const UserManager = () => import("../pages/UserManager.vue");
@@ -32,6 +33,12 @@ const routes = [
     name: "ConstructionManager",
     component: ConstructionManager,
     meta: { title: "Construction Manager" },
+  },
+  {
+    path: "/construction-basic",
+    name: "ConstructionBasic",
+    component: ConstructionBasic,
+    meta: { title: "Construction Basic" },
   },
   {
     path: "/construction-status",

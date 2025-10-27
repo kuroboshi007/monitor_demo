@@ -1,7 +1,7 @@
 <template>
-  <div style="padding: 24px;">
-    <h1>License Management</h1>
-    <p>This page will implement license management functionality.</p>
+  <div style="padding: 24px">
+    <h1>ライセンス管理</h1>
+    <p>このページではライセンス管理機能を実装します。</p>
   </div>
 </template>
 
