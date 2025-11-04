@@ -78,6 +78,7 @@ const routes = [
   {
     path: "/wall",
     component: WallView,
+    meta: { isWall: true },
   },
 ];
 

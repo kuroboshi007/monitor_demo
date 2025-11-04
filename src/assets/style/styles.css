@@ -3,7 +3,11 @@ body,
 #app {
   height: 100%;
   margin: 0;
+  max-width: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
 }
+
 button {
   padding: 6px 10px;
   border: 1px solid #ddd;
@@ -23,33 +27,37 @@ button {
   padding: 0 8px;
   margin: 0;
   box-sizing: border-box;
+
+  .logo {
+    display: flex;
+    align-items: center;
+    width: 60px;
+    padding-right: 12px;
+    padding-left: 6px;
+    box-sizing: border-box;
+  }
+
+  h2 {
+    margin: 0;
+  }
 }
 
-.title_box .logo {
-  display: flex;
-  align-items: center;
-  width: 60px;
-  padding-right: 12px;
-  padding-left: 6px;
-  box-sizing: border-box;
-}
-
-.title_box h2 {
-  margin: 0;
-}
-
-.logo .n-avatar {
-  background: none;
+.logo {
+  .n-avatar {
+    background: none;
+  }
 }
 
 .page_container {
   padding: 24px;
 }
 
-.n-layout-scroll-container.main_content {
-  height: calc(100vh - 64px);
-  box-sizing: border-box;
-  padding: 10px;
+.n-layout-scroll-container {
+  &.main_content {
+    height: calc(100vh - 64px);
+    box-sizing: border-box;
+    padding: 10px;
+  }
 }
 
 /* data bar */
@@ -57,26 +65,28 @@ button {
   margin: 12px 0;
   display: flex;
   justify-content: space-between;
-}
-.data_bar_right {
-  flex: 1;
-  display: flex;
-  justify-content: end;
-  margin-left: 30px;
-}
 
-.data_bar_right .n-input {
-  min-width: 300px;
-  max-width: 600px;
-  margin-right: 10px;
-}
+  .data_bar_right {
+    flex: 1;
+    display: flex;
+    justify-content: end;
+    margin-left: 30px;
 
-.data_bar_left {
-  display: flex;
-  align-items: center;
-}
-.data_bar_left .n-button {
-  margin-right: 10px;
+    .n-input {
+      min-width: 300px;
+      max-width: 600px;
+      margin-right: 10px;
+    }
+  }
+
+  .data_bar_left {
+    display: flex;
+    align-items: center;
+
+    .n-button {
+      margin-right: 10px;
+    }
+  }
 }
 
 /* map marker */
@@ -87,8 +97,22 @@ button {
   background: #2b7;
   border: 2px solid #fff;
   box-shadow: 0 0 0 2px #2b7;
+
+  &.picked {
+    background: #f60;
+    box-shadow: 0 0 0 2px #f60;
+  }
 }
-.jr-marker.picked {
-  background: #f60;
-  box-shadow: 0 0 0 2px #f60;
+
+/* custom scrollbar styles */
+.scroller {
+  --scrollbar-color-track: transparent;
+  --scrollbar-color-thumb: #63e2b7;
+
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-color-thumb) var(--scrollbar-color-track);
+
+  :is(&, & *)::-webkit-scrollbar-button {
+    display: none;
+  }
 }

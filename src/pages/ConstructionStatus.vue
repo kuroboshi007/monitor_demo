@@ -19,14 +19,15 @@
         </p>
         <div class="select_list">
           <ul class="asset-list">
-            <li
-              v-for="a in assets"
-              :key="a.id"
-              :class="{ selected: wall.isSelected(a.id) }"
-              @click="selectAsset(a)"
-            >
-              {{ a.name }}
-            </li>
+            <n-scrollbar style="max-height: 300px" trigger="none">
+              <li
+                v-for="a in assets"
+                :key="a.id"
+                :class="{ selected: wall.isSelected(a.id) }"
+                @click="selectAsset(a)">
+                {{ a.name }}
+              </li>
+            </n-scrollbar>
           </ul>
         </div>
         <!-- Open the monitor wall in a new window -->
@@ -44,7 +45,7 @@
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { computed, onMounted, ref, watch } from "vue";
-import { NButton, useMessage, useThemeVars } from "naive-ui";
+import { NButton, NScrollbar, useMessage, useThemeVars } from "naive-ui";
 import { useWallStore } from "../stores/wall";
 import { listAssets, type AssetInfo } from "../services/api";
 import {
@@ -214,8 +215,6 @@ button[disabled] {
   list-style: none;
   padding: 0;
   margin: 8px 0;
-  max-height: 300px;
-  overflow-y: auto;
 }
 
 .asset-list li {
