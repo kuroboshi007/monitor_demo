@@ -20,6 +20,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.5.4",
+    "@vicons/carbon": "^0.13.0",
     "@vitejs/plugin-vue": "^6.0.1",
     "typescript": "^5.9.2",
     "vite": "^7.1.3"

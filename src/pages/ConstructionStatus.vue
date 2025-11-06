@@ -9,32 +9,194 @@
       <!-- Sidebar: selectable construction sites -->
       <div class="_map_sidebar" :width="400">
         <!-- Show current selection count -->
-        <h3>Selected {{ selectedCount }}</h3>
-        <p>Select up to 9 assets to monitor</p>
-        <p>
-          Click a name below or a marker on the map to select/deselect assets.
-        </p>
-        <p>
-          When finished, click the button below to open the monitoring wall.
-        </p>
-        <div class="select_list">
-          <ul class="asset-list">
-            <n-scrollbar style="max-height: 300px" trigger="none">
-              <li
-                v-for="a in assets"
-                :key="a.id"
-                :class="{ selected: wall.isSelected(a.id) }"
-                @click="selectAsset(a)">
-                {{ a.name }}
-              </li>
-            </n-scrollbar>
-          </ul>
+        <div class="point_list">
+          <h3>工事拠点({{ assets.length }})</h3>
+          <n-input-group class="_search">
+            <n-input :style="{ width: '75%' }" placeholder="工事名で検索" />
+            <n-button type="primary">
+              <template #icon>
+                <NIcon>
+                  <Search />
+                </NIcon>
+              </template>
+            </n-button>
+          </n-input-group>
+          <div class="is-checkbox">
+            <div class="_switch">
+              複数現場を選択: <n-switch v-model:value="isCheckBox" />
+            </div>
+            <div class="_button">
+              <n-button type="info" ghost :disabled="!isCheckBox"
+                >全選択</n-button
+              >
+              <n-button type="info" ghost :disabled="!isCheckBox"
+                >全解除</n-button
+              >
+            </div>
+          </div>
+          <div class="select_list">
+            <ul class="asset_list">
+              <n-scrollbar style="max-height: 400px" trigger="none">
+                <li
+                  v-for="a in assets"
+                  :key="a.id"
+                  :class="{ selected: wall.isSelected(a.id) }"
+                  @click="selectAsset(a)">
+                  {{ a.name }}
+                </li>
+              </n-scrollbar>
+            </ul>
+          </div>
+          <!-- Open the monitor wall in a new window -->
+          <div class="go_monitor">
+            <n-button :disabled="selectedCount === 0" @click="goMonitor"
+              >映像を表示</n-button
+            >
+          </div>
         </div>
-        <!-- Open the monitor wall in a new window -->
-        <div>
-          <n-button :disabled="selectedCount === 0" @click="goMonitor"
-            >Go to the Monitor</n-button
-          >
+        <div class="user_list">
+          <h3>ユーザー</h3>
+          <n-input-group class="_search">
+            <n-input :style="{ width: '75%' }" placeholder="ユーザー名で検索" />
+            <n-button type="primary">
+              <template #icon>
+                <NIcon>
+                  <Search />
+                </NIcon>
+              </template>
+            </n-button>
+          </n-input-group>
+          <div class="user_tb_list">
+            <n-scrollbar style="max-height: 500px" trigger="none">
+              <div class="user_tb">
+                <div class="_company_name">東京工事A班</div>
+                <n-table :single-line="false" size="small">
+                  <thead>
+                    <tr>
+                      <th>属性</th>
+                      <th>ユーザー</th>
+                      <th>GNSS</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td><i class="user_status leader"></i></td>
+                      <td>責任者 太郎</td>
+                      <td>
+                        <span class="battery_full">
+                          <n-icon size="24" :color="themeVars.primaryColor">
+                            <BatteryFull />
+                          </n-icon>
+                        </span>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td><i class="user_status worker"></i></td>
+                      <td>作業員 次郎</td>
+                      <td>
+                        <span class="battery_full">
+                          <n-icon size="24" :color="themeVars.primaryColor">
+                            <BatteryFull />
+                          </n-icon>
+                        </span>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td><i class="user_status watcher"></i></td>
+                      <td>見張 太郎</td>
+                      <td>
+                        <span class="battery_half">
+                          <n-icon size="24" :color="themeVars.warningColor">
+                            <BatteryHalf />
+                          </n-icon>
+                        </span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </n-table>
+              </div>
+              <div class="user_tb">
+                <div class="_company_name">東京工事B班</div>
+                <n-table :single-line="false" size="small">
+                  <thead>
+                    <tr>
+                      <th>属性</th>
+                      <th>ユーザー</th>
+                      <th>GNSS</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td><i class="user_status leader"></i></td>
+                      <td>責任者 太郎</td>
+                      <td>
+                        <span class="battery_full">
+                          <n-icon size="24" :color="themeVars.primaryColor">
+                            <BatteryFull />
+                          </n-icon>
+                        </span>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td><i class="user_status worker"></i></td>
+                      <td>作業員 次郎</td>
+                      <td>
+                        <span class="battery_full">
+                          <n-icon size="24" :color="themeVars.primaryColor">
+                            <BatteryFull />
+                          </n-icon>
+                        </span>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td><i class="user_status worker"></i></td>
+                      <td>作業員 三郎</td>
+                      <td>
+                        <span class="battery_full">
+                          <n-icon size="24" :color="themeVars.primaryColor">
+                            <BatteryFull />
+                          </n-icon>
+                        </span>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td><i class="user_status worker"></i></td>
+                      <td>作業員 四郎</td>
+                      <td>
+                        <span class="battery_half">
+                          <n-icon size="24" :color="themeVars.warningColor">
+                            <BatteryHalf />
+                          </n-icon>
+                        </span>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td><i class="user_status worker"></i></td>
+                      <td>作業員 五郎</td>
+                      <td>
+                        <span class="battery_low">
+                          <n-icon size="24" :color="themeVars.errorColor">
+                            <BatteryLow />
+                          </n-icon>
+                        </span>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td><i class="user_status watcher"></i></td>
+                      <td>見張 太郎</td>
+                      <td>
+                        <span class="battery_half">
+                          <n-icon size="24" :color="themeVars.warningColor">
+                            <BatteryHalf />
+                          </n-icon>
+                        </span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </n-table>
+              </div>
+            </n-scrollbar>
+          </div>
         </div>
       </div>
     </div>
@@ -45,7 +207,17 @@
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { computed, onMounted, ref, watch } from "vue";
-import { NButton, NScrollbar, useMessage, useThemeVars } from "naive-ui";
+import {
+  NButton,
+  NScrollbar,
+  NTable,
+  NIcon,
+  NInput,
+  NInputGroup,
+  NSwitch,
+  useMessage,
+  useThemeVars,
+} from "naive-ui";
 import { useWallStore } from "../stores/wall";
 import { listAssets, type AssetInfo } from "../services/api";
 import {
@@ -53,6 +225,7 @@ import {
   postUpdateToMonitor,
   attachCloseChildOnUnload,
 } from "../utils/monitorBridge";
+import { BatteryHalf, BatteryLow, BatteryFull, Search } from "@vicons/carbon";
 
 const message = useMessage();
 const themeVars = useThemeVars();
@@ -60,6 +233,7 @@ const themeVars = useThemeVars();
 // state: map and assets
 const wall = useWallStore();
 const assets = ref<AssetInfo[]>([]);
+const isCheckBox = ref(false);
 
 // MapLibre style: GSI Pale map style
 const gsiPaleStyle = {
@@ -193,8 +367,10 @@ watch(selectedPayload, (payload) => {
 }
 
 ._map_sidebar {
-  width: 400px;
+  width: 500px;
   padding: 16px;
+  display: flex;
+  flex-direction: row;
   box-sizing: border-box;
   background: var(--n-color);
   overflow-y: auto;
@@ -210,27 +386,111 @@ button[disabled] {
   cursor: not-allowed;
 }
 
+.point_list,
+.user_list {
+  padding: 0 10px;
+  box-sizing: border-box;
+
+  ._search {
+    margin: 0 0 15px;
+  }
+}
+
+.point_list {
+  width: 200px;
+
+  .is-checkbox {
+    margin: 15px 0;
+  }
+
+  ._switch {
+    margin: 10px 0;
+    text-align: center;
+  }
+
+  ._button {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(2, 1fr);
+    box-sizing: border-box;
+    padding: 5px 8px;
+  }
+
+  .go_monitor {
+    margin-top: 15px;
+    text-align: center;
+  }
+}
+
+.user_list {
+  flex: 1;
+  .n-table {
+    th {
+      text-align: center;
+    }
+
+    td {
+      &:has(.user_status, .n-icon) {
+        text-align: center;
+      }
+    }
+  }
+
+  .user_tb_list {
+    /* max-height: 5
+    overflow-y: auto; */
+
+    .user_tb {
+      margin: 12px 0;
+    }
+
+    ._company_name {
+      font-size: 16px;
+      margin: 5px 0;
+    }
+  }
+
+  .user_status {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+  .leader {
+    background-color: v-bind("themeVars.infoColor");
+  }
+  .worker {
+    background-color: v-bind("themeVars.primaryColor");
+  }
+  .watcher {
+    background-color: v-bind("themeVars.warningColor");
+  }
+}
 /* asset list styles */
-.asset-list {
+.asset_list {
   list-style: none;
   padding: 0;
   margin: 8px 0;
+
+  li {
+    padding: 6px 8px;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  li:hover {
+    /* Use theme var to highlight on hover */
+    background: v-bind("themeVars.hoverColor");
+  }
+
+  li.selected {
+    background-color: rgba(24, 160, 88, 0.1);
+    font-weight: bold;
+    color: v-bind("themeVars.primaryColor");
+  }
 }
 
-.asset-list li {
-  padding: 6px 8px;
-  cursor: pointer;
-  user-select: none;
-}
-
-.asset-list li:hover {
-  /* Use theme var to highlight on hover */
-  background: v-bind("themeVars.hoverColor");
-}
-
-.asset-list li.selected {
-  background-color: rgba(24, 160, 88, 0.1);
-  font-weight: bold;
-  color: v-bind("themeVars.primaryColor");
+.maplibregl-popup-content {
+  color: #000;
 }
 </style>
