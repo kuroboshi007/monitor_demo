@@ -13,6 +13,7 @@ let lastPayload: any = null;
 // Flag to ensure we only attach the request‑update listener once.
 let channelRequestHandlerAttached = false;
 
+// Get (and lazily create) the BroadcastChannel for monitor synchronization.
 function getChannel() {
   if (!window.__monitorChannel) {
     window.__monitorChannel = new BroadcastChannel("monitor_sync");
@@ -30,6 +31,7 @@ function getChannel() {
   return ch;
 }
 
+// Open the monitor window or reuse the existing one if still open.
 export function openOrReuseMonitor(url: string) {
   if (window.__monitorWindow && !window.__monitorWindow.closed) {
     try {
@@ -50,14 +52,8 @@ export function openOrReuseMonitor(url: string) {
   return w;
 }
 
-/**
- * Send an update payload to the monitor window.  The payload should be
- * a plain JSON object that can be cloned across the channel.  If the
- * monitor window exists, a postMessage is sent directly; regardless, a
- * BroadcastChannel message is also emitted as a fallback.
- */
+// Post an update payload to the monitor window and via BroadcastChannel.
 export function postUpdateToMonitor(payload: unknown) {
-  // Remember the payload so it can be sent to a newly opened monitor
   lastPayload = payload;
   const child = window.__monitorWindow;
   if (child && !child.closed) {
@@ -73,20 +69,11 @@ export function postUpdateToMonitor(payload: unknown) {
   getChannel().postMessage({ type: "update", data: payload });
 }
 
-/**
- * Request the latest selection data from the parent page.  The parent
- * will respond by re‑emitting the last sent payload.  This should be
- * called by the monitor page on mount to ensure it has initial data.
- */
 export function requestLatestUpdate() {
   getChannel().postMessage({ type: "requestUpdate" });
 }
 
-/**
- * Attach a handler that closes the monitor window when the main window
- * unloads (e.g. user closes the page or navigates away).  This helps
- * enforce a one‑to‑one relationship between the parent and child.
- */
+// Attach a listener to close the monitor window and channel on unload.
 export function attachCloseChildOnUnload() {
   const handler = () => {
     if (window.__monitorWindow && !window.__monitorWindow.closed) {
@@ -105,11 +92,7 @@ export function attachCloseChildOnUnload() {
   window.addEventListener("beforeunload", handler, { once: true });
 }
 
-/**
- * Listener for child windows: listens for messages on both postMessage
- * and BroadcastChannel and invokes the provided callback when an update
- * payload is received.  Returns a function to remove the listeners.
- */
+// Attach a listener to receive update messages from the monitor window.
 export function listenMonitorUpdates(onUpdate: (data: any) => void) {
   const origin = window.location.origin;
 

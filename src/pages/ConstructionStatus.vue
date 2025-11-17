@@ -6,9 +6,9 @@
         <!-- 2D map container -->
         <div id="map" class="map"></div>
       </div>
-      <!-- Sidebar: selectable construction sites -->
+      <!-- Sidebar: selectable construction sites and user lists -->
       <div class="_map_sidebar" :width="400">
-        <!-- Show current selection count -->
+        <!-- Show current selection count and controls -->
         <div class="point_list">
           <h3>工事拠点({{ assets.length }})</h3>
           <n-input-group class="_search">
@@ -26,10 +26,18 @@
               複数現場を選択: <n-switch v-model:value="isCheckBox" />
             </div>
             <div class="_button">
-              <n-button type="info" ghost :disabled="!isCheckBox"
+              <n-button
+                type="info"
+                ghost
+                :disabled="!isCheckBox"
+                @click="selectAllAssets"
                 >全選択</n-button
               >
-              <n-button type="info" ghost :disabled="!isCheckBox"
+              <n-button
+                type="info"
+                ghost
+                :disabled="!isCheckBox"
+                @click="deselectAllAssets"
                 >全解除</n-button
               >
             </div>
@@ -40,7 +48,11 @@
                 <li
                   v-for="a in assets"
                   :key="a.id"
-                  :class="{ selected: wall.isSelected(a.id) }"
+                  :class="{
+                    selected: wall.isSelected(a.id),
+                    last_selected:
+                      wall.isSelected(a.id) && lastSelectedId === a.id,
+                  }"
                   @click="selectAsset(a)">
                   {{ a.name }}
                 </li>
@@ -68,8 +80,13 @@
           </n-input-group>
           <div class="user_tb_list">
             <n-scrollbar style="max-height: 500px" trigger="none">
-              <div class="user_tb">
-                <div class="_company_name">東京工事A班</div>
+              <!-- Dynamically render a user table for each selected asset -->
+              <div
+                v-for="asset in selectedPlain"
+                :key="asset.id"
+                class="user_tb">
+                <!-- Display the asset (work site) name as the section header -->
+                <div class="_company_name">{{ asset.name }}</div>
                 <n-table :single-line="false" size="small">
                   <thead>
                     <tr>
@@ -79,115 +96,33 @@
                     </tr>
                   </thead>
                   <tbody>
-                    <tr>
-                      <td><i class="user_status leader"></i></td>
-                      <td>責任者 太郎</td>
+                    <!-- For each user associated with this asset, render a row -->
+                    <tr
+                      v-for="user in assetUsers[asset.id] || []"
+                      :key="user.id">
                       <td>
-                        <span class="battery_full">
+                        <i class="user_status" :class="user.role"></i>
+                      </td>
+                      <td>{{ user.name }}</td>
+                      <td>
+                        <!-- Show the appropriate battery icon and colour based on GNSS status -->
+                        <span
+                          v-if="user.gnss === 'battery_full'"
+                          class="battery_full">
                           <n-icon size="24" :color="themeVars.primaryColor">
                             <BatteryFull />
                           </n-icon>
                         </span>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td><i class="user_status worker"></i></td>
-                      <td>作業員 次郎</td>
-                      <td>
-                        <span class="battery_full">
-                          <n-icon size="24" :color="themeVars.primaryColor">
-                            <BatteryFull />
-                          </n-icon>
-                        </span>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td><i class="user_status watcher"></i></td>
-                      <td>見張 太郎</td>
-                      <td>
-                        <span class="battery_half">
+                        <span
+                          v-else-if="user.gnss === 'battery_half'"
+                          class="battery_half">
                           <n-icon size="24" :color="themeVars.warningColor">
                             <BatteryHalf />
                           </n-icon>
                         </span>
-                      </td>
-                    </tr>
-                  </tbody>
-                </n-table>
-              </div>
-              <div class="user_tb">
-                <div class="_company_name">東京工事B班</div>
-                <n-table :single-line="false" size="small">
-                  <thead>
-                    <tr>
-                      <th>属性</th>
-                      <th>ユーザー</th>
-                      <th>GNSS</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td><i class="user_status leader"></i></td>
-                      <td>責任者 太郎</td>
-                      <td>
-                        <span class="battery_full">
-                          <n-icon size="24" :color="themeVars.primaryColor">
-                            <BatteryFull />
-                          </n-icon>
-                        </span>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td><i class="user_status worker"></i></td>
-                      <td>作業員 次郎</td>
-                      <td>
-                        <span class="battery_full">
-                          <n-icon size="24" :color="themeVars.primaryColor">
-                            <BatteryFull />
-                          </n-icon>
-                        </span>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td><i class="user_status worker"></i></td>
-                      <td>作業員 三郎</td>
-                      <td>
-                        <span class="battery_full">
-                          <n-icon size="24" :color="themeVars.primaryColor">
-                            <BatteryFull />
-                          </n-icon>
-                        </span>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td><i class="user_status worker"></i></td>
-                      <td>作業員 四郎</td>
-                      <td>
-                        <span class="battery_half">
-                          <n-icon size="24" :color="themeVars.warningColor">
-                            <BatteryHalf />
-                          </n-icon>
-                        </span>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td><i class="user_status worker"></i></td>
-                      <td>作業員 五郎</td>
-                      <td>
-                        <span class="battery_low">
+                        <span v-else class="battery_low">
                           <n-icon size="24" :color="themeVars.errorColor">
                             <BatteryLow />
-                          </n-icon>
-                        </span>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td><i class="user_status watcher"></i></td>
-                      <td>見張 太郎</td>
-                      <td>
-                        <span class="battery_half">
-                          <n-icon size="24" :color="themeVars.warningColor">
-                            <BatteryHalf />
                           </n-icon>
                         </span>
                       </td>
@@ -219,7 +154,12 @@ import {
   useThemeVars,
 } from "naive-ui";
 import { useWallStore } from "../stores/wall";
-import { listAssets, type AssetInfo } from "../services/api";
+import {
+  listAssets,
+  getUsersByAssetId,
+  type AssetInfo,
+  type UserInfo,
+} from "../services/api";
 import {
   openOrReuseMonitor,
   postUpdateToMonitor,
@@ -234,6 +174,190 @@ const themeVars = useThemeVars();
 const wall = useWallStore();
 const assets = ref<AssetInfo[]>([]);
 const isCheckBox = ref(false);
+const assetUsers = ref<Record<string, UserInfo[]>>({});
+const roleNames: Record<UserInfo["role"], string> = {
+  leader: "責任者",
+  worker: "作業員",
+  watcher: "見張",
+};
+
+// track the ID of the last selected asset for highlighting and map centering
+const lastSelectedId = ref<string | null>(null);
+let map: any;
+const userMarkers: Record<string, any[]> = {};
+
+// Zoom threshold to switch between showing all users vs. only leaders
+const zoomThreshold = 13;
+
+// computed: number of selected assets
+const selectedCount = computed(() => wall.selected.length);
+
+// computed: plain clone of selected items (to avoid reactive proxies)
+const selectedPlain = computed(() =>
+  wall.selected.map((a) => ({ id: a.id, name: a.name }))
+);
+
+// compute the payload to send to the monitor
+const selectedPayload = computed(() => ({
+  items: selectedPlain.value,
+  count: selectedPlain.value.length,
+  lastSelectedId: lastSelectedId.value,
+  timestamp: Date.now(),
+}));
+
+// Select or deselect a single asset when clicked in the list
+async function selectAsset(a: AssetInfo) {
+  const wasSelected = wall.isSelected(a.id);
+  if (!isCheckBox.value) {
+    const current = [...wall.selected];
+    for (const s of current) {
+      if (s.id !== a.id) {
+        wall.toggleAsset({ id: s.id, name: s.name });
+        // remove cached users for deselected assets
+        delete assetUsers.value[s.id];
+      }
+    }
+  }
+  // Toggle the clicked asset
+  wall.toggleAsset({ id: a.id, name: a.name });
+  if (!wasSelected) {
+    // Asset was newly selected: load its users and set as last selected
+    try {
+      assetUsers.value[a.id] = await getUsersByAssetId(a.id);
+    } catch (e) {
+      console.error(`Failed to load users for asset ${a.id}:`, e);
+      assetUsers.value[a.id] = [];
+    }
+    lastSelectedId.value = a.id;
+  } else {
+    // Asset was deselected: remove user list
+    delete assetUsers.value[a.id];
+    // If there are still selected assets, update lastSelectedId to the last one
+    if (wall.selected.length > 0) {
+      const last = wall.selected[wall.selected.length - 1];
+      lastSelectedId.value = last.id;
+    } else {
+      lastSelectedId.value = null;
+    }
+  }
+  // After updating selection, recenter map on the last selected asset and update user markers
+  if (map) {
+    if (lastSelectedId.value) {
+      const target = assets.value.find((x) => x.id === lastSelectedId.value);
+      if (target) {
+        // Center the map around the newly selected asset without changing the zoom level
+        map.easeTo({ center: [target.lng, target.lat] });
+      }
+    }
+    updateUserMarkers();
+  }
+}
+
+// Select all assets in the list.  This is used by the "select all" button
+async function selectAllAssets() {
+  // Iterate over all assets
+  for (const a of assets.value) {
+    if (!wall.isSelected(a.id)) {
+      wall.toggleAsset({ id: a.id, name: a.name });
+    }
+    // Load or refresh users for each asset
+    try {
+      assetUsers.value[a.id] = await getUsersByAssetId(a.id);
+    } catch (e) {
+      console.error(`Failed to load users for asset ${a.id}:`, e);
+      assetUsers.value[a.id] = [];
+    }
+  }
+  // Set the last selected to the final asset in the list
+  if (assets.value.length > 0) {
+    lastSelectedId.value = assets.value[assets.value.length - 1].id;
+  } else {
+    lastSelectedId.value = null;
+  }
+
+  // Recenter the map on the last selected asset and update user markers
+  if (map) {
+    if (lastSelectedId.value) {
+      const target = assets.value.find((x) => x.id === lastSelectedId.value);
+      if (target) {
+        map.easeTo({ center: [target.lng, target.lat] });
+      }
+    }
+    updateUserMarkers();
+  }
+  message.info("複数選択を完了しました");
+}
+
+// Deselect all selected assets.  This is used by the "deselect all" button
+function deselectAllAssets() {
+  const current = [...wall.selected];
+  for (const s of current) {
+    wall.toggleAsset({ id: s.id, name: s.name });
+    delete assetUsers.value[s.id];
+  }
+  lastSelectedId.value = null;
+  // After clearing all selections, remove any existing user markers
+  if (map) {
+    updateUserMarkers();
+  }
+  message.info("複数選択を解除しました");
+}
+
+// Update user markers on the map based on the current selection and zoom level.
+function updateUserMarkers() {
+  if (!map) return;
+  // Remove all existing user markers
+  for (const key in userMarkers) {
+    for (const m of userMarkers[key]) {
+      m.remove();
+    }
+    delete userMarkers[key];
+  }
+  // Only display markers for the last selected asset
+  if (!lastSelectedId.value) return;
+  const assetId = lastSelectedId.value;
+  const users = assetUsers.value[assetId] || [];
+  const asset = assets.value.find((a) => a.id === assetId);
+  if (!asset) return;
+  userMarkers[assetId] = [];
+  // Determine whether to display all users or only leaders based on zoom
+  const currentZoom = map.getZoom();
+  const showAll = currentZoom >= zoomThreshold;
+  let visibleUsers: UserInfo[] = users;
+  if (!showAll) {
+    visibleUsers = users.filter((u) => u.role === "leader");
+  }
+  for (const user of visibleUsers) {
+    const el = document.createElement("div");
+    el.classList.add("user-marker");
+    el.classList.add(user.role);
+    // Determine popup content: show user name on hover when zoomed in, otherwise show asset name
+    const popupText = showAll ? user.name : asset.name;
+    const popup = new maplibregl.Popup({ offset: 15 }).setText(popupText);
+    const marker = new maplibregl.Marker({ element: el })
+      .setLngLat([user.lng, user.lat])
+      .setPopup(popup)
+      .addTo(map);
+    userMarkers[assetId].push(marker);
+  }
+}
+
+// Open or reuse the monitor window and send the current selection payload.
+function goMonitor() {
+  const url = new URL("/wall", location.origin).toString();
+  const child = openOrReuseMonitor(url);
+  if (!child) {
+    message.error(
+      "The browser blocked the popup. Please allow pop-ups for this site and try again."
+    );
+    return;
+  }
+  try {
+    postUpdateToMonitor(selectedPayload.value);
+  } catch (e) {
+    console.error("Failed to post initial payload:", e);
+  }
+}
 
 // MapLibre style: GSI Pale map style
 const gsiPaleStyle = {
@@ -257,82 +381,23 @@ const gsiPaleStyle = {
   ],
 };
 
-// store references to markers so we can toggle picked state
-const markerEls: Record<string, HTMLElement> = {};
-
-// computed: number of selected assets
-const selectedCount = computed(() => wall.selected.length);
-
-// computed: plain clone of selected items (to avoid reactive proxies)
-const selectedPlain = computed(() =>
-  wall.selected.map((a) => ({ id: a.id, name: a.name }))
-);
-
-// compute the payload to send to the monitor
-const selectedPayload = computed(() => ({
-  items: selectedPlain.value,
-  count: selectedPlain.value.length,
-  timestamp: Date.now(),
-}));
-
-/**
- * Toggle selection for an asset. Works for both sidebar and marker clicks.
- */
-function selectAsset(a: AssetInfo) {
-  const already = wall.isSelected(a.id);
-  if (!already && selectedCount.value >= 9) {
-    console.warn("Upper limit reached: you can select up to 9 items.");
-    return;
-  }
-  wall.toggleAsset({ id: a.id, name: a.name });
-  const el = markerEls[a.id];
-  if (el) {
-    el.classList.toggle("picked", wall.isSelected(a.id));
-  }
-}
-
-/**
- * Open the monitor wall or reuse an existing one, then immediately send current selection.
- */
-function goMonitor() {
-  const url = new URL("/wall", location.origin).toString();
-  const child = openOrReuseMonitor(url);
-  if (!child) {
-    message.error(
-      "The browser blocked the popup. Please allow pop-ups for this site and try again."
-    );
-    return;
-  }
-  try {
-    postUpdateToMonitor(selectedPayload.value);
-  } catch (e) {
-    console.error("Failed to post initial payload:", e);
-  }
-}
-
-// initialize the map and markers
+// initialize the map
 onMounted(async () => {
   attachCloseChildOnUnload();
-  const map = new maplibregl.Map({
+  map = new maplibregl.Map({
     container: "map",
     style: gsiPaleStyle,
     center: [139.7671, 35.6812],
-    zoom: 11,
+    zoom: 13,
   });
+  // Load asset list
   assets.value = await listAssets();
-  for (const a of assets.value) {
-    const el = document.createElement("div");
-    el.className = "jr-marker";
-    if (wall.isSelected(a.id)) el.classList.add("picked");
-    markerEls[a.id] = el;
-    new maplibregl.Marker({ element: el })
-      .setLngLat([a.lng, a.lat])
-      .setPopup(new maplibregl.Popup().setText(a.name))
-      .addTo(map);
-    el.addEventListener("click", () => {
-      selectAsset(a);
-    });
-  }
+  map.on("load", () => {
+    updateUserMarkers();
+  });
+  map.on("zoomend", () => {
+    updateUserMarkers();
+  });
 });
 
 // whenever the selection payload changes, send an update to the monitor window
@@ -341,6 +406,16 @@ watch(selectedPayload, (payload) => {
     postUpdateToMonitor(payload);
   } catch (e) {
     console.error("Failed to post update payload:", e);
+  }
+});
+
+// when multi-select mode is turned off, clear all selections
+watch(isCheckBox, (val, oldVal) => {
+  console.log("isCheckBox changed:", oldVal, "=>", val);
+  if (!val && oldVal) {
+    deselectAllAssets();
+    console.log("deselectAllAssets called");
+    lastSelectedId.value = null;
   }
 });
 </script>
@@ -437,9 +512,6 @@ button[disabled] {
   }
 
   .user_tb_list {
-    /* max-height: 5
-    overflow-y: auto; */
-
     .user_tb {
       margin: 12px 0;
     }
@@ -455,15 +527,7 @@ button[disabled] {
     height: 10px;
     border-radius: 50%;
     display: inline-block;
-  }
-  .leader {
-    background-color: v-bind("themeVars.infoColor");
-  }
-  .worker {
-    background-color: v-bind("themeVars.primaryColor");
-  }
-  .watcher {
-    background-color: v-bind("themeVars.warningColor");
+    border: 2px solid #fff;
   }
 }
 /* asset list styles */
@@ -488,6 +552,31 @@ button[disabled] {
     font-weight: bold;
     color: v-bind("themeVars.primaryColor");
   }
+
+  li.selected.last_selected {
+    background-color: rgba(255, 193, 7, 0.1);
+    font-weight: bold;
+    color: v-bind("themeVars.warningColor");
+  }
+}
+
+/* Marker element for users on the map */
+.user-marker {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1px solid #fff;
+}
+
+/* Global role colours for user markers and status indicators */
+.leader {
+  background-color: v-bind("themeVars.infoColor");
+}
+.worker {
+  background-color: v-bind("themeVars.primaryColor");
+}
+.watcher {
+  background-color: v-bind("themeVars.warningColor");
 }
 
 .maplibregl-popup-content {

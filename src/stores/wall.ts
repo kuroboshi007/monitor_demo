@@ -76,7 +76,8 @@ export const useWallStore = defineStore("wall", {
       const i = this.selected.findIndex((x) => x.id === a.id);
       if (i >= 0) {
         this.selected.splice(i, 1);
-      } else if (this.selected.length < 9) {
+        // } else if (this.selected.length < 9) {
+      } else {
         this.selected.push(a);
       }
     },
